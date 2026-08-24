@@ -115,7 +115,7 @@ button:hover{border-color:var(--gold)}
 <details class="col" id="col-mast" open><summary>Masteries</summary><div class="colbody">
 <div class="mpline" id="mpline" style="margin:6px 0 4px"></div>
 <table id="mtable" style="margin-bottom:8px"></table>
-<div style="margin:8px 0"><button id="clearall" type="button">clear all</button></div>
+<div style="margin:8px 0"><button id="clearmast" type="button">clear all</button></div>
 <div id="masteries"></div>
 </div></details>
 </div>
@@ -298,7 +298,7 @@ document.querySelectorAll('#masteries input[data-rank]').forEach(cb=>{
     });
   });
 });
-el('clearall').addEventListener('click', e=>{ e.preventDefault(); document.querySelectorAll('#masteries input').forEach(cb=>cb.checked=false); calc(); });
+el('clearmast').addEventListener('click', e=>{ e.preventDefault(); document.querySelectorAll('#masteries input').forEach(cb=>cb.checked=false); calc(); });
 function filterRacial(){
   const race = el('race').value;
   document.querySelectorAll('#masteries .fam[data-race]').forEach(row=>{
@@ -828,6 +828,8 @@ function snapshot(){
     mast: [...document.querySelectorAll('#masteries input:checked')].map(cb=>DATA.masteries[+cb.dataset.mi].name) };
 }
 function restore(st){
+  if(st.race!=null && !(st.race in DATA.races)) st.race = el('race').value; // unknown race in file: keep current, don't break calc()
+  if(st.sign!=null && !(st.sign in DATA.signs)) st.sign = el('sign').value;
   el('race').value = st.race; el('sign').value = st.sign; el('cls').value = st.cls||'Stealth'; filterClass(); refreshPresets(); ensureWeaponOption(st.weapon); el('firedebuff').checked = !!st.debuff; el('unarm').value = st.unarm||'100'; el('sk_light').value = st.skl||'100'; el('sk_medium').value = st.skm||'100'; el('sk_heavy').value = st.skh||'100'; el('vamp').checked = !!st.vamp; if(el('vampclan')) el('vampclan').value = st.vampclan || 'Aundae'; if(el('vamp').checked){ syncVamp(); } else { const _w=el('vampclanwrap'); if(_w) _w.style.display='none'; } el('wolf').checked = !!st.wolf; if(el('strike') && st.strike) el('strike').value = st.strike;
   document.querySelectorAll('#slots input[data-search]').forEach(i=>{i.value=''; i.placeholder='search';});
   const sl = Object.assign({}, st.slots);
@@ -1022,5 +1024,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.15 · 2026-08-22 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.16 · 2026-08-24 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
