@@ -188,7 +188,7 @@ const CFX = [['agi','Agility'],['str','Strength'],['end','Endurance'],['spe','Sp
 const CBASE = {ring:55, amulet:55, helm:59, shield:88, shirt:29, pants:29, skirt:29, robe:30, feet:19, hands:11, belt:29};  // observed fortify-class self-enchant maxes (KB enchanting baselines)
 const ARSLOT = {cuirass:1, helm:1, shield:1, greaves:1, feet:1, pauldronl:1, pauldronr:1, handl:1, handr:1};  // slots that take an armor piece
 const slotsDiv = el('slots');
-const SLOTEMOJI = {helm:'🪖', cuirass:'⛓️', pauldronl:'💪', pauldronr:'💪', handl:'🧤', handr:'🧤', greaves:'🦵', feet:'🥾', shield:'🛡️', shirt:'👕', pants:'👖', skirt:'🩳', robe:'🧥', belt:'🔗', amulet:'📿', ring:'💍', ring2:'💍'};
+const SLOTEMOJI = {helm:'👑', cuirass:'⛓️', pauldronl:'💪', pauldronr:'💪', handl:'🧤', handr:'🧤', greaves:'🦵', feet:'🥾', shield:'🛡️', shirt:'👕', pants:'👖', skirt:'🩳', robe:'🧥', belt:'🔗', amulet:'📿', ring:'💍', ring2:'💍'};
 const SLOTGROUPS = {helm:'🛡️ Armor', shirt:'💍 Clothing &amp; jewelry'};   // divider headers before these slots
 SLOTS.forEach(([slot, label]) => {
   const bslot = SLOTBASE0(slot);
@@ -1102,5 +1102,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.25 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.26 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
