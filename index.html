@@ -497,19 +497,23 @@ function calc(){
   const hpFactor = HPRATIO + hfSum;
   const hpComputed = Math.floor(attr('end') * hpFactor);
   const bHP = hpComputed;
-  // Magicka (community-measured 8/21, validated exact): base 1× INT; Fortify-Max-Magicka abilities stack FLATLY on top.
-  // Only these carry the ability — signs: Atronach 1.2 (measured; dev doc 1.25 superseded), Mage 1.0, Apprentice 1.5; racials: Altmer 1.5, Breton 0.5. No spec/class factor.
+  // Magicka DECODED 2026-08-25 from three clean naked readings (L1 27=0.9x30 exact; L60 712=floor(125x5.7) exact; L60 469 vs 470.0
+  // integer-boundary float quirk): maxMag = floor(INT x (spec_magicka_factor + level x 0.025 + carriers)). The dev-stated spec factors
+  // (Combat 0.9 / Stealth 1.15 / Magic 1.5) are LIVE in the pool - base is NOT 1 x INT. Builder assumes L60 (level term 1.5), same as fatigue.
+  // Carriers (displayed Fortify Maximum Magicka xINT) - signs: Atronach 1.2 (measured; dev doc 1.25 superseded), Mage 1.0, Apprentice 1.5; racials: Altmer 1.5, Breton 0.5.
+  // In-game display can read 1 lower when the product lands exactly on an integer (observed once: 470.0 -> 469); fractional products floor exactly.
   const SIGNMULT = {Atronach:1.2, Mage:1.0, Apprentice:1.5};
   const RACEMULT = {Altmer:1.5, Breton:0.5};
+  const SPECMAG = {Combat:0.9, Stealth:1.15, Magic:1.5};
   const sMult = SIGNMULT[el('sign').value]||0, rMult = RACEMULT[el('race').value]||0;
-  const magMult = Math.round((1 + sMult + rMult + sum('magx'))*100)/100;
+  const magMult = Math.round(((SPECMAG[CLS]||0) + 1.5 + sMult + rMult + sum('magx'))*100)/100;
   // Owner-ruled 8/24 (KB formula:magicka): magicka scales with ACTUAL INT up to the character's effective
   // cap (175 base + INT Fortification Max) — 175 is only the un-raised base cap, not a hard clip.
   // attr('int') is already min(cap, raw), so no extra 175 clamp here (the old flat min(INT,175) is superseded).
   const magInt = attr('int');
   const magComputed = Math.floor(magInt * magMult + 1e-9);   // in-game display floors (462.5→462)
   const iMult = sum('magx');   // ×INT from items (e.g. Mantle of Woe 5.0) — stacks flatly like the abilities
-  const magParts = '1 base' + (sMult?` + ${sMult} ${el('sign').value}`:'') + (rMult?` + ${rMult} ${el('race').value}`:'') + (iMult?` + ${iMult} items`:'');
+  const magParts = `${SPECMAG[CLS]||0} ${CLS} spec + 1.5 level(60)` + (sMult?` + ${sMult} ${el('sign').value}`:'') + (rMult?` + ${rMult} ${el('race').value}`:'') + (iMult?` + ${iMult} items`:'');
   // Fatigue RESOLVED 8/21: STR+WIL+AGI+END (UESP structure) + 55 NP bonus at L60 — validated exact on two L60 characters (515, 470). L1 shows +1; builder assumes L60.
   const fatSum = attr('str') + attr('wil') + attr('agi') + attr('end');
   const fatBase = fatSum + 55;
@@ -1102,5 +1106,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.27 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.28 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
