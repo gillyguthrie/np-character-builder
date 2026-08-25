@@ -748,7 +748,13 @@ function calc(){
     let cls, note;
     if(CHANCE[k]){ const mv = multStack(k); cls = mv>0?'capped':''; note = mv>0?'active':'—'; return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${mv}%</td><td class="${cls}">${note}</td></tr>`; }
     else { cls = v>=85?'capped':(v<0?'neg':(v<40?'warnc':'')); note = v>=85?'✓ capped (85)':(v<0?'⚠ WEAKNESS':(v<40?'low':'ok')); }
-    return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${v}%</td><td class="${cls}">${note}</td></tr>`;
+    // Fire Camp debuff (codex camp:infernal-flame-atronach-camp): camp mobs cast -70 Weakness to Fire.
+    // Effective resist there = raw stack − 70; you need a RAW stack ≥ 155 to still sit at the 85 cap while debuffed.
+    let extra = '';
+    if(k==='fire'){ const fc = Math.round((v-70)*10)/10;
+      const fcls = fc>=85?'capped':(fc<0?'neg':(fc<40?'warnc':''));
+      extra = ` <span class="${fcls}" title="2026 Fire Camp (Infernal Flame Atronachs): camp mobs cast -70 Weakness to Fire. Effective = raw stack − 70; a raw stack of 155+ stays at the 85 cap while debuffed.">· Fire Camp (−70): ${fc}%${fc>=85?' ✓':(fc<0?' ⚠':'')}</span>`; }
+    return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${v}%</td><td class="${cls}">${note}${extra}</td></tr>`;
   }).join('');
   renderBreakdown();
   el('mpline').innerHTML = `Mastery points toggled: <b style="color:var(--good)">${mp}</b> banked`;
@@ -1106,5 +1112,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.28 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.29 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
