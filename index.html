@@ -532,17 +532,14 @@ function calc(){
            mag0:[magComputed, sum('mag'), 0, 'computed', magMult, `Base: min(INT ${sum('int')}, cap ${cap('int')}) = ${magInt} × ${magMult}`, magParts],
            fat0:[fatBase, sum('fat'), fatSum, 'computed', `STR ${attr('str')} + WIL ${attr('wil')} + AGI ${attr('agi')} + END ${attr('end')} = ${fatSum}`]};
   // regens: tick = 6s CONFIRMED (2026-08-21); per-sec equivalent = /s + tick/6
-  // Native pool-scaled regen (v1.35): 5% of max HP and 5% of max Fatigue per tick — "every 100
-  // HP/MP/Fatigue also = +5 hot/mot/fot" (wiki author, 2025-03-23; HP's 5% independently attested
-  // 2026-08-16 = fact:native-hp-regen / fact:native-fatigue-regen). Native magicka stays the measured
-  // 1/tick GMST (pushed as a CONTRIB above). Atronach (Stunted) deletes ALL base regen (wiki author, 8/21).
-  const atronSign = el('sign').value === 'Atronach';
-  const nativeHpTick = atronSign ? 0 : Math.round(totHP*0.05*10)/10;
-  const nativeFatTick = atronSign ? 0 : Math.round(totFat*0.05*10)/10;
-  const hpreg = sum('rhp') + (sum('hot') + nativeHpTick)/6;
+  // v1.36 (maintainer-ruled 2026-08-26): NO native HP or fatigue regen exists — the archive quotes that
+  // suggested a 5%-of-max native rate describe pool-scaled regen SOURCES, not a universal baseline, and the
+  // maintainer (daily player) has never observed one. Native magicka stays the measured 1/tick GMST
+  // (CONTRIB above; deleted by Stunted Magicka). Atronach halves MASTERY-granted regen only; items untouched.
+  const hpreg = sum('rhp') + sum('hot')/6;
   const mpreg = sum('mot')/6 + sum('rmp');
-  const fatreg = (sum('fot') + nativeFatTick)/6;
-  REGEN = {hpreg:[sum('rhp'), sum('hot'), nativeHpTick, 'HP'], mpreg:[sum('rmp'), sum('mot'), 0, 'MP'], fatreg:[0, sum('fot'), nativeFatTick, 'Fatigue']};
+  const fatreg = sum('fot')/6;
+  REGEN = {hpreg:[sum('rhp'), sum('hot'), 0, 'HP'], mpreg:[sum('rmp'), sum('mot'), 0, 'MP'], fatreg:[0, sum('fot'), 0, 'Fatigue']};
   DPSINFO = {speed:w.speed, known:w.speed_known, base:w.base, name:w.name, note:w.note||'', proc, procDmg, strike:sk?sk.n:'(no ability)', kind:sk?sk.kind:null, cd:sk&&sk.cd, cdDps, avg:strikeAvg, range:w.range, abnote:sk&&sk.note||'', dmgmax:w.dmgmax||0, dmgtype:w.dmgtype||'', dmg:w.dmg||null, strMod, hit:hitDmg};
   UNKNOWNS = {};
   // Encumbrance — reads the per-slot weight fields (prefilled from data, user-correctable)
@@ -838,21 +835,16 @@ function renderOne(bd, key){
     const rk = {hp0:['rhp','hot'],mag0:['rmp','mot'],fat0:[null,'fot']}[key];
     if(rk[0]) CONTRIB.filter(c=>c.k===rk[0]).forEach(c=>list.push({t:'regen', src:c.src+' (per second)', v:'+'+c.v+'/s'}));
     CONTRIB.filter(c=>c.k===rk[1]).forEach(c=>list.push({t:'regen', src:`${c.src} (${c.v}/tick ÷ 6s)`, v:'+'+(Math.round(c.v/6*10)/10)+'/s'}));
-    const natv = {hp0: REGEN.hpreg[2], fat0: REGEN.fatreg[2]}[key];
-    if(natv) list.push({t:'regen', src:`Native regen — 5% of max per 6s tick (${natv}/tick ÷ 6s)`, v:'+'+(Math.round(natv/6*10)/10)+'/s'});
-    else if((key==='hp0'||key==='fat0') && el('sign').value==='Atronach') list.push({t:'regen', src:'Native regen deleted (Stunted Magicka / Atronach)', v:'—'});
     if(key==='hp0' && TICKS.length) TICKS.forEach(t=>list.push({t:'regen', src:t+' (hidden HoT, unmeasured)', v:'?'}));
     fmt = ((f)=>v=>typeof v==='string'?v:f(v))(fmt);
   } else if(REGEN[key]){
     const [persec, tick, native, pool] = REGEN[key];
     const kk = {hpreg:['rhp','hot'],mpreg:['rmp','mot'],fatreg:[null,'fot']}[key];
     list = [];
-    if(native) list.push({src:`Native regen — 5% of max ${pool} per 6s tick (${native}/tick ÷ 6s)`, v:r1(native/6)});
-    else if((key==='hpreg'||key==='fatreg') && el('sign').value==='Atronach') list.push({src:'Native regen deleted (Stunted Magicka / Atronach)', v:'—'});
     if(kk[0]) CONTRIB.filter(c=>c.k===kk[0]).forEach(c=>list.push({src:c.src+' (per second)', v:c.v}));
     CONTRIB.filter(c=>c.k===kk[1]).forEach(c=>list.push({src:c.src+` (${c.v}/tick ÷ 6s)`, v:r1(c.v/6)}));
     if(key==='hpreg' && TICKS.length) TICKS.forEach(t=>list.push({src:t+' (hidden HoT, unmeasured)', v:'?'}));
-    total = r1(persec + (tick + native)/6) + '/s';
+    total = r1(persec + tick/6) + '/s';
     fmt = v => typeof v==='number' ? `+${v}` : v;
   } else if(key==='hit'){
     const D = DPSINFO;
@@ -1140,5 +1132,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.35 · 2026-08-26 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.36 · 2026-08-26 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
