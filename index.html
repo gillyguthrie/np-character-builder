@@ -978,7 +978,9 @@ el('loadfile').addEventListener('change', ()=>{
   f.text().then(t=>{
     let o; try { o = JSON.parse(t); } catch(err){ el('savename').value=''; el('savename').placeholder='not a valid loadout file'; el('loadfile').value=''; return; }
     const st = o && o.app==='nplb' ? o.state : o;
-    if(st && st.race){ restore(st); if(o.name){ el('savename').value = o.name; el('savename').placeholder='loadout name'; } }
+    // v1.32: a loadout with race unset is VALID (blank-slate model; community builds are often race-agnostic) —
+    // accept any object that looks like a loadout state instead of requiring a truthy race.
+    if(st && (typeof st.race==='string' || Array.isArray(st.mast) || st.slots)){ restore(st); if(o.name){ el('savename').value = o.name; el('savename').placeholder='loadout name'; } }
     else { el('savename').value=''; el('savename').placeholder='not a valid loadout file'; }
     el('loadfile').value='';
   });
@@ -1120,5 +1122,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.31 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.32 · 2026-08-25 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
