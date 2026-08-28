@@ -769,7 +769,7 @@ function calc(){
     return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${v}%</td><td class="${cls}">${note}${extra}</td></tr>`;
   }).join('');
   renderBreakdown();
-  el('mpline').innerHTML = `Mastery points toggled: <b style="color:var(--good)">${mp}</b> banked`;
+  el('mpline').innerHTML = `Mastery Points Spent: <b style="color:var(--good)">${mp}</b>`;
   const fams = {};
   chosen.forEach(m=>{ (fams[m.fam]=fams[m.fam]||[]).push(m); });
   // Net-effect labels (owner feedback 8/24): each selected family shows what its owned ranks actually
@@ -1144,5 +1144,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.41 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.42 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
