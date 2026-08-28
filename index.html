@@ -306,12 +306,7 @@ DATA.masteries.forEach((m,i)=>{
 });
 let mh = '';
 if(topPicks.length){
-  // v1.56: same row layout as every other family — name | right-justified tag | ✓ checkbox (5th slot) | mp
-  mh += '<div style="margin:2px 0 8px;padding:2px 10px 4px;border:1px solid var(--line);border-radius:6px">' +
-    topPicks.sort((a,b)=>TOPPICKS.indexOf(a[0].name)-TOPPICKS.indexOf(b[0].name)).map(([m,i])=>{
-      const tip = `${m.name} — ${m.cost} MP — ${m.raw||''}${m.gate?` — requires: ${m.gate}`:''}`;
-      return `<div class="fam"><span class="nm">${m.name}</span><span class="tag">${TOPBLURB[m.name]||m.raw||''}</span><span class="rk">${'<span class="rkpad"></span>'.repeat(4)}<label title="${tip}">✓<input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(m.fam)}" data-rank="0"></label> <span style="color:#5a5142;display:inline-block;width:42px;text-align:right">${m.cost}mp</span></span></div>`;
-    }).join('') + '</div>';
+  // v1.58: the top box is gone — Godborn / God Touched render at the bottom of Attributes / Blessings (see below)
 }
 Object.keys(sections).sort((a,b)=>{ const ia=SECTION_ORDER.indexOf(a), ib=SECTION_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib) || a.localeCompare(b); }).forEach(sec=>{
   const foci = sections[sec];
@@ -343,10 +338,19 @@ Object.keys(sections).sort((a,b)=>{ const ia=SECTION_ORDER.indexOf(a), ib=SECTIO
       }).join('');
       const ranksPadded = '<span class="rkpad"></span>'.repeat(Math.max(0, 5 - list.length)) + ranks;   // v1.55: ranks right-justified (pad on the left) in a fixed 5-slot grid
       const mrace = list[0][0].race || '';
-      const gsign = (sec==='Birthsigns' && gate && /The (\w+) birthsign/.exec(gate)) ? /The (\w+) birthsign/.exec(gate)[1] : '';
+      const rawGate = list.map(([m])=>m.gate).find(Boolean) || '';   // v1.58: filter reads the real gate (display gate is blank since v1.53)
+      const gsign = (sec==='Birthsigns' && /The (\w+) birthsign/.exec(rawGate)) ? /The (\w+) birthsign/.exec(rawGate)[1] : '';
       inner += `<div class="fam"${mrace?` data-race="${mrace}"`:''}${gsign?` data-bsign="${gsign}"`:''}><span class="nm">${fam}${fxsum?` <span style="color:var(--muted);font-size:10.5px">${fxsum}</span>`:''}${gate?` <span class="aff" style="font-size:10.5px">${gate}</span>`:''}${aff?` <span class="aff" style="font-size:10.5px">${aff} affinity</span>`:''}</span><span class="tag">${tag}</span><span class="rk">${ranksPadded} <span style="color:#5a5142;display:inline-block;width:42px;text-align:right">${total}mp</span></span></div>`;
     });
   });
+  // v1.58: Godborn closes the Attributes section, God Touched closes Blessings — each under a rule
+  const bottomName = {'Attributes':'Godborn','Blessings (Resists)':'God Touched'}[sec];
+  const bottom = bottomName && topPicks.find(([m])=>m.name===bottomName);
+  if(bottom){
+    const [m,i] = bottom;
+    const tip = `${m.name} — ${m.cost} MP — ${m.raw||''}${m.gate?` — requires: ${m.gate}`:''}`;
+    inner += `<div class="fam" style="margin-top:8px;padding-top:7px;border-top:1px solid rgba(201,164,92,.3)"><span class="nm">${m.name}</span><span class="tag">${TOPBLURB[m.name]||m.raw||''}</span><span class="rk">${'<span class="rkpad"></span>'.repeat(4)}<label title="${tip}">✓<input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(m.fam)}" data-rank="0"></label> <span style="color:#5a5142;display:inline-block;width:42px;text-align:right">${m.cost}mp</span></span></div>`;
+  }
   mh += `<details class="msec"${anyPlan?' open':''}><summary>${sec}</summary><div class="mgroup">${inner}</div></details>`;
 });
 el('masteries').innerHTML = mh;
@@ -1248,5 +1252,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.57 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.58 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
