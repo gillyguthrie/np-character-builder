@@ -114,10 +114,9 @@ button:hover{border-color:var(--gold)}
 <div id="breakdown"></div>
 <!-- v1.40: fire-camp debuff checkbox removed (owner request 8/27: not tracking it in the builder yet). Loadout files with a debuff field still load; the flag is ignored. -->
 </div></details>
-<details class="col" id="col-mast" open><summary>Masteries</summary><div class="colbody">
+<details class="col" id="col-mast" open><summary style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>Masteries</span><button id="clearmast" type="button" title="Uncheck every mastery" style="flex:none;font-size:11px;padding:2px 8px">clear all</button></summary><div class="colbody">
 <div class="mpline" id="mpline" style="margin:6px 0 4px"></div>
 <table id="mtable" style="margin-bottom:8px"></table>
-<div style="margin:8px 0"><button id="clearmast" type="button">clear all</button></div>
 <div id="masteries"></div>
 </div></details>
 </div>
@@ -360,7 +359,7 @@ document.querySelectorAll('#masteries input[data-rank]').forEach(cb=>{
     if(cb.checked) cascadeOn(i, new Set()); else cascadeOff(i, new Set());
   });
 });
-el('clearmast').addEventListener('click', e=>{ e.preventDefault(); document.querySelectorAll('#masteries input').forEach(cb=>cb.checked=false); calc(); });
+el('clearmast').addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#masteries input').forEach(cb=>cb.checked=false); calc(); });   // v1.50: lives in the pane header (top-right, never moves); stopPropagation keeps the <details> from toggling
 function filterRacial(){
   const race = el('race').value;
   document.querySelectorAll('#masteries .fam[data-race]').forEach(row=>{
@@ -1216,5 +1215,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.49 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.50 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
