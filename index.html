@@ -810,7 +810,7 @@ function calc(){
   const r1 = v => Math.round(v*10)/10;
   // v1.73 (owner request 8/28): capped tiles read 'value / cap'; the raw total moves to the subtext when over the cap
   const atile = a => `${attr(a)} <span style="font-size:14px;color:var(--muted)">/ ${cap(a)}</span>`;
-  const asub = a => sum(a)>cap(a) ? `raw ${sum(a)}` : '';
+  const asub = a => sum(a)>cap(a) ? `+${sum(a)-cap(a)} over cap` : '';
   const noW = wv === '';
   // Fix #6, REVISED 8/24 (owner-ruled, KB fact:overmax-system / fact:overmax-magicka-bug): overmax is
   // CAP-RELATIVE — a stat is overmaxed only when its RAW total exceeds the character's cap (175 base +
@@ -1334,5 +1334,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.73 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.74 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
