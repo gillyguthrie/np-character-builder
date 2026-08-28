@@ -265,6 +265,7 @@ const SKILLCAT = {Armorer:'Combat',Athletics:'Combat',Axe:'Combat','Blunt Weapon
   Alchemy:'Magic',Alteration:'Magic',Conjuration:'Magic',Destruction:'Magic',Enchant:'Magic',Illusion:'Magic',Mysticism:'Magic',Restoration:'Magic',Unarmored:'Magic',
   Acrobatics:'Stealth','Hand-to-Hand':'Stealth','Light Armor':'Stealth',Marksman:'Stealth',Mercantile:'Stealth',Security:'Stealth','Short Blade':'Stealth',Sneak:'Stealth',Speechcraft:'Stealth'};
 const TOPPICKS = ['Godborn','God Touched'];   // rendered as standalone checkboxes above the sections
+const TOPBLURB = {'Godborn':'+25 to All Attributes and Caps'};   // display-only wording (owner request 8/28); data raw text unchanged
 const FOCUS = m => {
   const f = m.fx||{};
   if(m.section==='Skill Masteries') return SKILLCAT[m.skill] || 'Other';
@@ -293,7 +294,7 @@ if(topPicks.length){
   mh += '<div class="fam" style="margin:2px 0 8px;padding:6px 10px;border:1px solid var(--line);border-radius:6px"><span class="nm">' +
     topPicks.sort((a,b)=>a[0].name.localeCompare(b[0].name)).map(([m,i])=>{
       const tip = `${m.name} — ${m.cost} MP — ${m.raw||''}${m.gate?` — ${m.gate}`:''}`;
-      return `<label title="${tip}" style="margin-right:14px"><input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(m.fam)}" data-rank="0"> <b>${m.name}</b> <span style="color:var(--muted);font-size:10.5px">${m.raw||''}</span> <span style="color:#5a5142">${m.cost}mp</span></label>`;
+      return `<label title="${tip}" style="margin-right:14px"><input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(m.fam)}" data-rank="0"> <b>${m.name}</b> <span style="color:var(--muted);font-size:10.5px">${TOPBLURB[m.name]||m.raw||''}</span> <span style="color:#5a5142">${m.cost}mp</span></label>`;
     }).join('') + '</span></div>';
 }
 Object.keys(sections).sort().forEach(sec=>{
@@ -1215,5 +1216,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.48 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.49 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
