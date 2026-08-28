@@ -23,6 +23,9 @@ details.col > .colbody{padding:0 14px 14px}
 select,input[type=text]{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 6px;font:12px Georgia,serif}
 select{width:100%}
 .slot input{width:70px;font-size:11px}
+#lvlrow label{display:flex;gap:4px;align-items:center;white-space:nowrap;flex:none}
+#lvlrow input[type=checkbox]{width:auto;margin:0}
+#lvlrow select{font-size:11px;padding:1px 2px}
 details.msec{border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--panel2)}
 details.msec summary{cursor:pointer;padding:6px 10px;font-size:12px;color:var(--ink2)}
 .fam{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;align-items:baseline;padding:2px 0;font-size:12px;border-bottom:1px dotted #332c1d}
@@ -98,18 +101,17 @@ button:hover{border-color:var(--gold)}
 <div style="margin-top:10px;text-align:center"><img id="shot"><div id="shotcap"></div></div>
 </div></details>
 <details class="col" id="col-char" open><summary><span>Character</span><button id="clearchar" type="button" class="paneclear" title="Reset level, race, birthsign, spec, vampire and werewolf">Clear all</button></summary><div class="colbody">
-<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Level</label><input type="text" id="lvl" value="60" style="width:60px" title="Character level (default 60). Saved with the loadout; pool formulas still assume level 60 for now."></div>
+<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Level</label><div id="lvlrow" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;row-gap:4px;font-size:12px;color:var(--ink2)"><input type="text" id="lvl" value="60" style="width:44px;flex:none" title="Character level (default 60). Saved with the loadout; pool formulas still assume level 60 for now.">
+  <label style="display:flex;gap:5px;align-items:center" title="Passives: +20 Agi/Str/Wil/Spe · +30 Unarmored/Sneak/Hand-to-Hand/Athletics/Destruction/Illusion/Mysticism/Acrobatics · Resist Paralysis 100 · Disease immunity 100 · Resist Normal Weapons 50 · Weakness to Fire 50. (Owner-corrected 8/24: skill passives are +30 base; the old +50 Unarmored/Sneak/H2H reading came from a Berne vampire, whose clan trio adds +20 on top.) Skill bonuses show as 'Modified' under the Base armor skills — the base fields are not overwritten."><input type="checkbox" id="vamp"> Vampire</label>
+  <label id="vampclanwrap" style="display:none;gap:5px;align-items:center" title="Vampire clan: each adds +20 to one attribute and three skills — Aundae: Wil, Short Blade/Mysticism/Destruction · Berne: Agi, Sneak/Unarmored/Hand-to-Hand · Quarra: Str, Blunt/Hand-to-Hand/Heavy Armor. Armor-skill bonuses appear on the Modified lines, not written into the base fields."><select id="vampclan"><option value="Aundae">Aundae Clan</option><option value="Berne">Berne Clan</option><option value="Quarra">Quarra Clan</option></select></label>
+  <label style="display:flex;gap:5px;align-items:center"><input type="checkbox" id="wolf"> Werewolf</label>
+</div></div>
 <div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Race</label><select id="race"></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 6px" id="racenote"></div>
 <div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Birthsign</label><select id="sign"></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="signnote"></div>
 <div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Spec</label><select id="cls" title="Specialization (the server's term): combat, magic, or stealth. Drives the mastery trees, equipment gating, the spec attribute, and the ability list."><option value="">— select —</option><option>Stealth</option><option>Combat</option><option>Magic</option></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="clsnote"></div>
-<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin:6px 0 8px;font-size:12px;color:var(--ink2)">
-  <label style="display:flex;gap:5px;align-items:center" title="Passives: +20 Agi/Str/Wil/Spe · +30 Unarmored/Sneak/Hand-to-Hand/Athletics/Destruction/Illusion/Mysticism/Acrobatics · Resist Paralysis 100 · Disease immunity 100 · Resist Normal Weapons 50 · Weakness to Fire 50. (Owner-corrected 8/24: skill passives are +30 base; the old +50 Unarmored/Sneak/H2H reading came from a Berne vampire, whose clan trio adds +20 on top.) Skill bonuses show as 'Modified' under the Base armor skills — the base fields are not overwritten."><input type="checkbox" id="vamp"> Vampire</label>
-  <label id="vampclanwrap" style="display:none;gap:5px;align-items:center" title="Vampire clan: each adds +20 to one attribute and three skills — Aundae: Wil, Short Blade/Mysticism/Destruction · Berne: Agi, Sneak/Unarmored/Hand-to-Hand · Quarra: Str, Blunt/Hand-to-Hand/Heavy Armor. Armor-skill bonuses appear on the Modified lines, not written into the base fields."><select id="vampclan"><option value="Aundae">Aundae Clan</option><option value="Berne">Berne Clan</option><option value="Quarra">Quarra Clan</option></select></label>
-  <label style="display:flex;gap:5px;align-items:center"><input type="checkbox" id="wolf"> Werewolf</label>
-</div>
 <div class="tiles" id="tiles"></div>
 <div id="breakdown2"></div>
 <table id="resists"></table>
@@ -1260,5 +1262,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.60 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.61 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
