@@ -95,7 +95,7 @@ button:hover{border-color:var(--gold)}
 <div class="slotgrp" style="margin:6px 0 2px;padding-top:6px;border-top:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);font-weight:700">⚔️ Weapon</div>
 <div class="slot" style="grid-template-columns:92px 70px 1fr 48px"><label></label><input type="text" id="wsearch" placeholder="search"><select id="weapon"></select><input type="text" data-wt="__weapon" placeholder="wt" title="Weapon weight — editable" style="width:44px"></div>
 <div id="slots"></div>
-<div style="margin-top:10px;text-align:center"><img id="shot"><div id="shotcap">Select an item to see its screenshot.</div></div>
+<div style="margin-top:10px;text-align:center"><img id="shot"><div id="shotcap"></div></div>
 </div></details>
 <details class="col" id="col-char" open><summary><span>Character</span><button id="clearchar" type="button" class="paneclear" title="Reset level, race, birthsign, spec, vampire and werewolf">Clear all</button></summary><div class="colbody">
 <div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Level</label><input type="text" id="lvl" value="60" style="width:60px" title="Character level (default 60). Saved with the loadout; pool formulas still assume level 60 for now."></div>
@@ -425,7 +425,7 @@ function filterClass(){
     sec.style.display = off ? 'none' : '';
     if(off) sec.querySelectorAll('input:checked').forEach(cb=>cb.checked=false);
   });
-  el('clsnote').textContent = cls ? CLSKEY[cls][1] : 'Pick a specialization to unlock its mastery trees and gear picks.';
+  el('clsnote').textContent = cls ? CLSKEY[cls][1] : '';   // v1.60: no 'pick a' hints
   document.querySelectorAll('#slots select[data-slot]').forEach(s=>{
     const cur = s.value; s.innerHTML = buildOptions(s.dataset.slot,'');
     if(cur==='__custom__') s.value = cur; else { s.value=''; ensureOption(s, cur); }
@@ -476,7 +476,7 @@ function findItem(v){ if(!v) return null; const [n,o] = decodeURIComponent(v).sp
   return DATA.items.find(i=>i.name===n && i.owner===o) || DATA.items.find(i=>i.name===n); }
 function showShot(obj){
   if(obj && obj.shot){ const im=el('shot'); im.onerror = obj.shotFull ? ()=>{ im.onerror=null; im.src=obj.shotFull; } : null; im.src = obj.shot; im.style.display='block'; el('shotcap').textContent = obj.name; }
-  else { el('shot').style.display='none'; el('shotcap').textContent = obj? 'No screenshot on file for '+obj.name : 'Select an item to see its screenshot.'; }
+  else { el('shot').style.display='none'; el('shotcap').textContent = obj? 'No screenshot on file for '+obj.name : ''; }
 }
 let CONTRIB = []; let showStat = null; let showRes = null; let showEq = null; let TICKS = []; let ARLIST = [];
 let POOLS = {}, REGEN = {}, DPSINFO = {}, UNKNOWNS = {}, ARUNK = [], ENCLIST = [], ENCTOT = 0;
@@ -491,8 +491,8 @@ function calc(){
   const sign = DATA.signs[el('sign').value] || {fx:{}, label:''};
   const CLS = el('cls').value || 'Stealth';   // internal fallback only — display is gated on `ready`
   const ready = !!(el('race').value && el('sign').value && el('cls').value);
-  el('racenote').textContent = race.label || 'Pick a race.';
-  el('signnote').textContent = sign.label || 'Pick a birthsign.';
+  el('racenote').textContent = el('race').value ? (race.label||'') : '';
+  el('signnote').textContent = el('sign').value ? (sign.label||'') : '';
   if(el('race').value) push('Race: '+el('race').value, race.fx, 'race');
   if(el('sign').value) push('Sign: '+el('sign').value, sign.fx, 'sign');
   // Native magicka regen: 1 Magicka/tick for everyone EXCEPT Stunted Magicka (Atronach) — measured 8/21
@@ -832,7 +832,7 @@ function calc(){
   // nothing). Equipment AR/encumbrance above stay live — they don't depend on the character selections.
   if(!ready){
     const need = [!el('race').value&&'race', !el('sign').value&&'birthsign', !el('cls').value&&'specialization'].filter(Boolean).join(', ');
-    el('tiles').innerHTML = `<div style="grid-column:1/-1;padding:14px 10px;color:var(--ink2);font-size:12.5px;border:1px dashed var(--line);border-radius:6px">Pick a ${need} to see character stats.</div>`;
+    el('tiles').innerHTML = '';   // v1.60: blank until race+sign+spec are chosen (hint text removed)
     el('resists').innerHTML = '';
     showStat = null; showRes = null;
   } else
@@ -1260,5 +1260,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.59 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.60 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
