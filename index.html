@@ -24,7 +24,8 @@ select{width:100%}
 .slot input{width:70px;font-size:11px}
 details.msec{border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--panel2)}
 details.msec summary{cursor:pointer;padding:6px 10px;font-size:12px;color:var(--ink2)}
-.fam{display:grid;grid-template-columns:1fr auto;gap:4px;align-items:baseline;padding:2px 0;font-size:12px;border-bottom:1px dotted #332c1d}
+.fam{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;align-items:baseline;padding:2px 0;font-size:12px;border-bottom:1px dotted #332c1d}
+.fam .tag{text-align:right;white-space:nowrap;color:var(--gold);font-size:10.5px;opacity:.85}
 .fam:last-child{border-bottom:none}
 .fam .rk{white-space:nowrap;color:var(--muted);font-size:11px}
 .fam .rk label{cursor:pointer;margin-left:2px}
@@ -299,8 +300,7 @@ DATA.masteries.forEach((m,i)=>{
   (sections[sec] = sections[sec]||{});
   const foc = FOCUS(m);
   (sections[sec][foc] = sections[sec][foc]||{});
-  const famKey = m.section==='Skill Masteries' && m.skill ? `${m.skill} - ${m.fam}`
-               : (sec==='Attributes' && ATTR_OF(m)) ? `${ATTR_OF(m)} - ${m.fam}` : m.fam;
+  const famKey = m.fam;   // v1.53: rows sort by family name; the skill/attribute moves to a right-justified tag
   (sections[sec][foc][famKey] = sections[sec][foc][famKey]||[]).push([m,i]);
 });
 let mh = '';
@@ -321,15 +321,24 @@ Object.keys(sections).sort((a,b)=>{ const ia=SECTION_ORDER.indexOf(a), ib=SECTIO
       const list = foci[foc][fam].sort((a,b)=>a[0].rank-b[0].rank);
       const total = list.reduce((s,[m])=>s+m.cost,0);
       const aff = list[0][0].aff;
-      const gate = list[0][0].section==='Skill Masteries' ? '' : list.map(([m])=>m.gate).find(Boolean);
-      const fxsum = list.length===1 ? Object.entries(list[0][0].fx).map(([k,v])=>`${STATNAMES[k]||k} ${v>0?'+':''}${v}`).join(', ') : '';
+      const gate = '';   // v1.53 (owner request 8/28): gate text no longer shown in rows (still in each checkbox tooltip)
+      const fxsum = '';
+      // v1.53: right-justified tag = the skill (Skill Masteries) or the attributes/stats the family modifies (from fx keys)
+      const tagOf = () => {
+        const m0 = list[0][0];
+        if(m0.section==='Skill Masteries' && m0.skill) return m0.skill;
+        const keys = []; list.forEach(([m])=>Object.keys(m.fx||{}).forEach(k=>{ const b=k.replace(/_cap$/,''); if(!keys.includes(b)) keys.push(b); }));
+        const names = keys.map(k=>STATNAMES[k]||k);
+        return names.length>4 ? names.slice(0,3).join(', ')+` +${names.length-3}` : names.join(', ');
+      };
+      const tag = tagOf();
       const ranks = list.map(([m,i])=>{
-        const tip = `${m.name} — ${m.cost} MP — ${Object.entries(m.fx).map(([k,v])=>k.endsWith('_cap')?`cap ${STATNAMES[k.replace('_cap','')]||k} +${v}`:`${STATNAMES[k]||k} ${v>0?'+':''}${v}`).join(', ')||m.raw||'no sheet effect'}`;
+        const tip = `${m.name} — ${m.cost} MP — ${Object.entries(m.fx).map(([k,v])=>k.endsWith('_cap')?`cap ${STATNAMES[k.replace('_cap','')]||k} +${v}`:`${STATNAMES[k]||k} ${v>0?'+':''}${v}`).join(', ')||m.raw||'no sheet effect'}${m.gate?` — requires: ${m.gate}`:''}`;
         return `<label title="${tip}">${m.rank||'✓'}<input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(fam)}" data-rank="${m.rank}" ${m.plan?'checked':''}></label>`;
       }).join('');
       const mrace = list[0][0].race || '';
       const gsign = (sec==='Birthsigns' && gate && /The (\w+) birthsign/.exec(gate)) ? /The (\w+) birthsign/.exec(gate)[1] : '';
-      inner += `<div class="fam"${mrace?` data-race="${mrace}"`:''}${gsign?` data-bsign="${gsign}"`:''}><span class="nm">${fam}${fxsum?` <span style="color:var(--muted);font-size:10.5px">${fxsum}</span>`:''}${gate?` <span class="aff" style="font-size:10.5px">${gate}</span>`:''}${aff?` <span class="aff" style="font-size:10.5px">${aff} affinity</span>`:''}</span><span class="rk">${ranks} <span style="color:#5a5142">${total}mp</span></span></div>`;
+      inner += `<div class="fam"${mrace?` data-race="${mrace}"`:''}${gsign?` data-bsign="${gsign}"`:''}><span class="nm">${fam}${fxsum?` <span style="color:var(--muted);font-size:10.5px">${fxsum}</span>`:''}${gate?` <span class="aff" style="font-size:10.5px">${gate}</span>`:''}${aff?` <span class="aff" style="font-size:10.5px">${aff} affinity</span>`:''}</span><span class="tag">${tag}</span><span class="rk">${ranks} <span style="color:#5a5142">${total}mp</span></span></div>`;
     });
   });
   mh += `<details class="msec"${anyPlan?' open':''}><summary>${sec}</summary><div class="mgroup">${inner}</div></details>`;
@@ -1230,5 +1239,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.52 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.53 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
