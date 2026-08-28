@@ -217,7 +217,9 @@ SLOTS.forEach(([slot, label]) => {
        <span style="text-align:right;white-space:nowrap">Armor Rating</span><input type="text" data-car="${slot}" value="0" style="opacity:.4" disabled title="The piece's tooltip AR exactly as shown in YOUR inventory — it already reflects your skill AND any Melding Construct bonus, so it is used as-is (no rescale and no Melding multiplier applied). Editable once the armor type is Light/Medium/Heavy."><span></span></div>` : '') +
       `</div>`);
 });
-document.querySelector('.customrow[data-cslot="__weapon"]').innerHTML = enchRowsHtml('__weapon', null);
+document.querySelector('.customrow[data-cslot="__weapon"]').innerHTML = enchRowsHtml('__weapon', null) +
+  `<div class="crow"><span>Weapon Type</span><select data-wtype="__weapon">${['Long Blade','Short Blade','Blunt Weapon','Axe','Spear','Marksman'].map(t=>`<option>${t}</option>`).join('')}</select>
+   <span style="text-align:right;white-space:nowrap">Attack Strength</span><input type="text" data-watk="__weapon" value="" title="The weapon's max damage from its tooltip (the top of the best attack range) — used as the power-attack base for Hit Damage"><span></span></div>`;
 function SLOTBASE0(slot){ return SLOTBASE[slot]||slot; }
 document.querySelectorAll('#slots input[data-search]').forEach(inp=>{
   inp.addEventListener('input', ()=>{
@@ -535,7 +537,8 @@ function calc(){
   const wv = el('weapon').value;
   const wCustom = wv === '__custom__';   // v1.68: user-specified weapon — enchants only, damage not modeled
   const w = wv === '' ? {name:'(no weapon)', speed:0, speed_known:true, range:0, base:0, note:'', stats:{}}
-          : wCustom ? {name:(el('wsearch').value.trim()||'User-specified weapon'), speed:0, speed_known:false, range:0, base:0, note:'user-specified', dmgmax:0, dmgtype:'', stats:{}}
+          : wCustom ? (()=>{ const atk = +((document.querySelector('[data-watk="__weapon"]')||{}).value) || 0; const wt = (document.querySelector('[data-wtype="__weapon"]')||{}).value || '';
+              return {name:(el('wsearch').value.trim()||'User-specified weapon'), speed:0, speed_known:false, range:0, base:0, note:`user-specified ${wt}`, dmgmax:atk, dmgtype:'Attack', dmg: atk?{Attack:[atk,atk]}:undefined, wskill:wt, stats:{}}; })()
           : DATA.weapons[+wv];
   if(wv !== '' && !wCustom) push(w.name+' [Weapon]', w.stats);
   if(wCustom) pushCustomEnch('__weapon', w.name, 'Weapon');
@@ -844,8 +847,8 @@ function calc(){
     ...(sum('fistdmg')? [['Fist Dmg','fistdmg', r1(sum('fistdmg')), 'Iron Fist (% of gauntlet AR)']] : []),
     // Row 5 — damage/armor (Unknown when an input is unverified — KB rule 8: no estimated numbers in results)
     ['Encumbrance','enc', ENCTOT + (typeof encUnk!=='undefined'&&encUnk?' +?':''), featherTot?`− ${Math.round(featherTot*10)/10} feather`:''],
-    ['Hit Damage','hit', (noW||wCustom)?'—':Math.round(hitDmg),
-      noW?'no weapon':wCustom?'user-specified weapon — damage not modeled':`${w.dmgtype} ${w.dmgmax} × Str mod ${Math.round(strMod*100)/100}` +
+    ['Hit Damage','hit', (noW||(wCustom&&!w.dmgmax))?'—':Math.round(hitDmg),
+      noW?'no weapon':(wCustom&&!w.dmgmax)?'enter an Attack Strength for the user-specified weapon':`${wCustom?w.wskill+' ':''}${w.dmgtype} ${w.dmgmax} × Str mod ${Math.round(strMod*100)/100}` +
       (skOwned&&sk.kind==='cd'?` · +${Math.round(procDmg)} ${sk.n} (${sk.cd}s)`:'') +
       (skOwned&&sk.kind==='proc'?` · +${Math.round(procDmg)} on ${proc.toFixed(0)}% proc`:'')],
     ['Armor','ar', ARUNK.length?'Unknown':armorTotal, ARUNK.length?`${ARUNK.length} piece(s) with unverified AR`:`weighted ${Math.floor(wAR)}${meldMult!==1?` (Melding ${meldRank} ×${meldMult.toFixed(2)})`:''}${shieldFlat?` + Shield ${shieldFlat}`:''}${armorBonusFlat?` + Bonus ${armorBonusFlat}`:''}`],
@@ -1072,7 +1075,7 @@ function snapshot(){
       return [sl, {fx: rows[0].fx, mag: rows[0].mag, en: rows[0].en, nm: cnameOf(sl),   // legacy first-row fields kept for older readers
         ench: rows.slice(0, Math.max(last,1)),
         ar: (document.querySelector(`[data-car="${sl}"]`)||{}).value||'', ac: (document.querySelector(`[data-cac="${sl}"]`)||{}).value||''}];})),
-    wcustom: el('weapon').value==='__custom__' ? {nm: el('wsearch').value.trim(), ench: enchRowsState('__weapon')} : undefined,
+    wcustom: el('weapon').value==='__custom__' ? {nm: el('wsearch').value.trim(), ench: enchRowsState('__weapon'), wtype: document.querySelector('[data-wtype="__weapon"]').value, atk: document.querySelector('[data-watk="__weapon"]').value} : undefined,
     wts: Object.fromEntries([...document.querySelectorAll('[data-wt]')].filter(f=>f.value.trim()!=='').map(f=>[f.dataset.wt, f.value.trim()])),
     mast: [...document.querySelectorAll('#masteries input:checked')].map(cb=>DATA.masteries[+cb.dataset.mi].name) };
 }
@@ -1087,7 +1090,7 @@ function restore(st){
     if(+st.unarm === 130 + (clan==='Berne'?20:0)) st.unarm = '100';
     if(+st.skh === 100 + (clan==='Quarra'?20:0)) st.skh = '100';
   }
-  el('lvl').value = st.lvl!=null && st.lvl!=='' ? st.lvl : '60'; el('race').value = st.race; el('sign').value = st.sign; el('cls').value = st.cls!=null ? st.cls : 'Stealth'; filterClass(); refreshPresets(); ensureWeaponOption(st.weapon); if(st.weapon==='__custom__'){ const wc=st.wcustom||{}; el('wsearch').value = wc.nm||''; restoreEnchRows('__weapon', Array.isArray(wc.ench)?wc.ench:[]); } else restoreEnchRows('__weapon', []); document.querySelector('.customrow[data-cslot="__weapon"]').style.display = st.weapon==='__custom__' ? '' : 'none'; el('unarm').value = st.unarm||'100'; el('sk_light').value = st.skl||'100'; el('sk_medium').value = st.skm||'100'; el('sk_heavy').value = st.skh||'100'; el('vamp').checked = !!st.vamp; if(el('vampclan')) el('vampclan').value = st.vampclan || 'Aundae'; if(el('vamp').checked){ syncVamp(); } else { const _w=el('vampclanwrap'); if(_w) _w.style.display='none'; } el('wolf').checked = !!st.wolf; if(el('strike') && st.strike) el('strike').value = st.strike;
+  el('lvl').value = st.lvl!=null && st.lvl!=='' ? st.lvl : '60'; el('race').value = st.race; el('sign').value = st.sign; el('cls').value = st.cls!=null ? st.cls : 'Stealth'; filterClass(); refreshPresets(); ensureWeaponOption(st.weapon); if(st.weapon==='__custom__'){ const wc=st.wcustom||{}; el('wsearch').value = wc.nm||''; restoreEnchRows('__weapon', Array.isArray(wc.ench)?wc.ench:[]); if(wc.wtype) document.querySelector('[data-wtype="__weapon"]').value = wc.wtype; document.querySelector('[data-watk="__weapon"]').value = wc.atk||''; } else restoreEnchRows('__weapon', []); document.querySelector('.customrow[data-cslot="__weapon"]').style.display = st.weapon==='__custom__' ? '' : 'none'; el('unarm').value = st.unarm||'100'; el('sk_light').value = st.skl||'100'; el('sk_medium').value = st.skm||'100'; el('sk_heavy').value = st.skh||'100'; el('vamp').checked = !!st.vamp; if(el('vampclan')) el('vampclan').value = st.vampclan || 'Aundae'; if(el('vamp').checked){ syncVamp(); } else { const _w=el('vampclanwrap'); if(_w) _w.style.display='none'; } el('wolf').checked = !!st.wolf; if(el('strike') && st.strike) el('strike').value = st.strike;
   document.querySelectorAll('#slots input[data-search]').forEach(i=>{i.value=''; i.placeholder='search';});
   const sl = Object.assign({}, st.slots);
   if(sl.pauldron && !sl.pauldronl){ sl.pauldronl = sl.pauldron; sl.pauldronr = sl.pauldron; }   // migrate old saves
@@ -1196,7 +1199,7 @@ document.addEventListener('change', e=>{
     const ws = el('wsearch'); const isC = e.target.value==='__custom__'; if((ws.placeholder==='name') !== isC){ ws.value=''; ws.placeholder = isC?'name':'search'; } }
   if(e.target.matches('[data-cen]')) syncEnchRows(e.target.dataset.cen);
   if(e.target.matches('[data-cac]')) syncCar(e.target.dataset.cac);
-  if(e.target.matches('[data-cfx],[data-cmag],[data-cen],[data-car],[data-cac]')) { calc(); return; }
+  if(e.target.matches('[data-cfx],[data-cmag],[data-cen],[data-car],[data-cac],[data-wtype],[data-watk]')) { calc(); return; }
   if(e.target.id==='weapon') showShot((e.target.value===''||e.target.value==='__custom__')?null:DATA.weapons[+e.target.value]);
   if(!e.target.matches('input[data-search]')) calc();
 });
@@ -1221,7 +1224,7 @@ el('unequipall').addEventListener('click', e=>{
   document.querySelectorAll('.customrow').forEach(r=>r.style.display='none');
   document.querySelectorAll('[data-cen]').forEach(cb=>cb.checked=false); document.querySelectorAll('[data-cac]').forEach(sl=>{ sl.value='unarmored'; syncCar(sl.dataset.cac); }); document.querySelectorAll('.customrow').forEach(r=>syncEnchRows(r.dataset.cslot));
   document.querySelectorAll('[data-wt]').forEach(f=>{f.value='';f.placeholder='wt';});
-  el('wsearch').value=''; el('wsearch').placeholder='search'; el('weapon').innerHTML = buildWeaponOptions(''); el('weapon').value='';   // v1.59: Clear all also drops the weapon
+  el('wsearch').value=''; el('wsearch').placeholder='search'; document.querySelector('[data-watk="__weapon"]').value=''; document.querySelector('[data-wtype="__weapon"]').value='Long Blade'; el('weapon').innerHTML = buildWeaponOptions(''); el('weapon').value='';   // v1.59: Clear all also drops the weapon
   showShot(null); calc();
 });
 // v1.59: Character pane Clear all — level/race/sign/spec/vampire/werewolf back to blank-slate defaults
@@ -1329,5 +1332,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.68 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.69 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
