@@ -265,11 +265,25 @@ const SKILLCAT = {Armorer:'Combat',Athletics:'Combat',Axe:'Combat','Blunt Weapon
   Acrobatics:'Stealth','Hand-to-Hand':'Stealth','Light Armor':'Stealth',Marksman:'Stealth',Mercantile:'Stealth',Security:'Stealth','Short Blade':'Stealth',Sneak:'Stealth',Speechcraft:'Stealth'};
 const TOPPICKS = ['Godborn','God Touched'];   // rendered as standalone checkboxes above the sections
 const TOPBLURB = {'Godborn':'+25 to All Attributes and Caps'};   // display-only wording (owner request 8/28); data raw text unchanged
+// v1.51 (owner request 8/28): the old General section is split into four top-level collapsible sections —
+// Attributes (rows prefixed "<Attribute> - <Family>", sorted by attribute), Blessings (Resists), HP / Magicka / Fatigue,
+// Other / Powers — each without subheads. Sections render in SECTION_ORDER, not alphabetically.
+const ATTRS = ['str','end','int','agi','wil','spe','per','luc'];
+const GENSEC = m => {
+  const f = m.fx||{};
+  if(m.name.includes('Blessing')) return 'Blessings (Resists)';
+  if(ATTRS.some(k=>k in f || (k+'_cap') in f)) return 'Attributes';
+  if(f.hp||f.hf||f.mag||f.fat||f.hot||f.mot||f.fot) return 'HP / Magicka / Fatigue';
+  return 'Other / Powers';
+};
+const ATTR_OF = m => { const f=m.fx||{}; const k = ATTRS.find(k=>k in f || (k+'_cap') in f); return k ? STATNAMES[k] : ''; };
+const SECTION_ORDER = ['Attributes','Blessings (Resists)','HP / Magicka / Fatigue','Other / Powers','Skills','Combat','Combat Master Classes','Magic','Magic Master Classes','Stealth','Stealth Master Classes','Racial','Vampire','Werewolf','Were-Hunter'];
 const FOCUS = m => {
   const f = m.fx||{};
   if(m.section==='Skill Masteries') return SKILLCAT[m.skill] || 'Other';
+  if(m.section==='General Masteries') return '';
   if(m.name.includes('Blessing')) return 'Blessings (resists)';
-  if(Object.keys(f).some(k=>k.endsWith('_cap'))) return m.section==='General Masteries' ? '' : 'Attributes & Fort-Max';
+  if(Object.keys(f).some(k=>k.endsWith('_cap'))) return 'Attributes & Fort-Max';
   if(f.hp||f.mag||f.fat||f.hot||f.mot||f.fot) return 'HP / Magicka / Fatigue';
   if(f.fire||f.frost||f.shock||f.rmag||f.poison||f.disease||f.nw||f.para) return 'Resists';
   if(f.attack||f.sanc) return 'Attack / Evasion';
@@ -281,11 +295,12 @@ DATA.masteries.forEach((m,i)=>{
   if(TOPPICKS.includes(m.name)){ topPicks.push([m,i]); return; }
   const sec0 = m.section.replace(/:$/,'');
   const sec = ['Altmer','Breton','Dunmer','Argonian','Bosmer','Imperial','Khajiit','Nord','Orc','Redguard','Racial Master Classes'].includes(sec0) ? 'Racial'
-            : sec0==='General Masteries' ? 'Attributes' : sec0==='Skill Masteries' ? 'Skills' : sec0==='Were-Hunter Specialization' ? 'Were-Hunter' : sec0;
+            : sec0==='General Masteries' ? GENSEC(m) : sec0==='Skill Masteries' ? 'Skills' : sec0==='Were-Hunter Specialization' ? 'Were-Hunter' : sec0;
   (sections[sec] = sections[sec]||{});
   const foc = FOCUS(m);
   (sections[sec][foc] = sections[sec][foc]||{});
-  const famKey = m.section==='Skill Masteries' && m.skill ? `${m.skill} - ${m.fam}` : m.fam;
+  const famKey = m.section==='Skill Masteries' && m.skill ? `${m.skill} - ${m.fam}`
+               : (sec==='Attributes' && ATTR_OF(m)) ? `${ATTR_OF(m)} - ${m.fam}` : m.fam;
   (sections[sec][foc][famKey] = sections[sec][foc][famKey]||[]).push([m,i]);
 });
 let mh = '';
@@ -296,7 +311,7 @@ if(topPicks.length){
       return `<label title="${tip}" style="margin-right:14px"><input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(m.fam)}" data-rank="0"> <b>${m.name}</b> <span style="color:var(--muted);font-size:10.5px">${TOPBLURB[m.name]||m.raw||''}</span> <span style="color:#5a5142">${m.cost}mp</span></label>`;
     }).join('') + '</span></div>';
 }
-Object.keys(sections).sort().forEach(sec=>{
+Object.keys(sections).sort((a,b)=>{ const ia=SECTION_ORDER.indexOf(a), ib=SECTION_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib) || a.localeCompare(b); }).forEach(sec=>{
   const foci = sections[sec];
   const anyPlan = Object.values(foci).some(fams=>Object.values(fams).some(list=>list.some(([m])=>m.plan)));
   let inner = '';
@@ -1215,5 +1230,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.50 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.51 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
