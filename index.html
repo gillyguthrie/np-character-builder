@@ -39,6 +39,7 @@ details.msec summary{cursor:pointer;padding:6px 10px;font-size:12px;color:var(--
 .mgroup{padding:2px 10px 8px}
 .aff{color:var(--warn)}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tiles.on{border-top:1px solid rgba(201,164,92,.3);padding-top:10px;margin-top:6px}
 .tile{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer}
 .tile.sel, tr.rrow.sel td{outline:2px solid var(--gold);outline-offset:-2px}
 .tile .v{font-size:20px;color:var(--gold);font-variant-numeric:tabular-nums}
@@ -101,17 +102,17 @@ button:hover{border-color:var(--gold)}
 </div></details>
 <details class="col" id="col-char" open><summary><span>Character</span><button id="clearchar" type="button" class="paneclear" title="Reset level, race, birthsign, spec, vampire and werewolf">Clear all</button></summary><div class="colbody">
 <div style="font-size:12px;color:var(--ink);margin:2px 0 6px">Level 60, all attributes and skills at 100.</div><input type="hidden" id="lvl" value="60">
-<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)"></label><div id="lvlrow" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;row-gap:4px;font-size:12px;color:var(--ink2)">
-  <label style="display:flex;gap:5px;align-items:center" title="Passives: +20 Agi/Str/Wil/Spe · +30 Unarmored/Sneak/Hand-to-Hand/Athletics/Destruction/Illusion/Mysticism/Acrobatics · Resist Paralysis 100 · Disease immunity 100 · Resist Normal Weapons 50 · Weakness to Fire 50. (Owner-corrected 8/24: skill passives are +30 base; the old +50 Unarmored/Sneak/H2H reading came from a Berne vampire, whose clan trio adds +20 on top.) Skill bonuses show as 'Modified' under the Base armor skills — the base fields are not overwritten."><input type="checkbox" id="vamp"> Vampire</label>
-  <label id="vampclanwrap" style="display:none;gap:5px;align-items:center" title="Vampire clan: each adds +20 to one attribute and three skills — Aundae: Wil, Short Blade/Mysticism/Destruction · Berne: Agi, Sneak/Unarmored/Hand-to-Hand · Quarra: Str, Blunt/Hand-to-Hand/Heavy Armor. Armor-skill bonuses appear on the Modified lines, not written into the base fields."><select id="vampclan"><option value="Aundae">Aundae Clan</option><option value="Berne">Berne Clan</option><option value="Quarra">Quarra Clan</option></select></label>
-  <label style="display:flex;gap:5px;align-items:center"><input type="checkbox" id="wolf"> Werewolf</label>
-</div></div>
 <div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Race</label><select id="race"></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 6px" id="racenote"></div>
 <div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Birthsign</label><select id="sign"></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="signnote"></div>
 <div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Spec</label><select id="cls" title="Specialization (the server's term): combat, magic, or stealth. Drives the mastery trees, equipment gating, the spec attribute, and the ability list."><option value="">— select —</option><option>Stealth</option><option>Combat</option><option>Magic</option></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="clsnote"></div>
+<div id="lvlrow" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;row-gap:4px;margin:4px 0 8px;font-size:12px;color:var(--ink2)">
+  <label style="display:flex;gap:5px;align-items:center" title="Passives: +20 Agi/Str/Wil/Spe · +30 Unarmored/Sneak/Hand-to-Hand/Athletics/Destruction/Illusion/Mysticism/Acrobatics · Resist Paralysis 100 · Disease immunity 100 · Resist Normal Weapons 50 · Weakness to Fire 50. (Owner-corrected 8/24: skill passives are +30 base; the old +50 Unarmored/Sneak/H2H reading came from a Berne vampire, whose clan trio adds +20 on top.) Skill bonuses show as 'Modified' under the Base armor skills — the base fields are not overwritten."><input type="checkbox" id="vamp"> Vampire</label>
+  <label id="vampclanwrap" style="display:none;gap:5px;align-items:center" title="Vampire clan: each adds +20 to one attribute and three skills — Aundae: Wil, Short Blade/Mysticism/Destruction · Berne: Agi, Sneak/Unarmored/Hand-to-Hand · Quarra: Str, Blunt/Hand-to-Hand/Heavy Armor. Armor-skill bonuses appear on the Modified lines, not written into the base fields."><select id="vampclan"><option value="Aundae">Aundae Clan</option><option value="Berne">Berne Clan</option><option value="Quarra">Quarra Clan</option></select></label>
+  <label style="display:flex;gap:5px;align-items:center"><input type="checkbox" id="wolf"> Werewolf</label>
+</div>
 <div class="tiles" id="tiles"></div>
 <div id="breakdown2"></div>
 <table id="resists"></table>
@@ -202,10 +203,12 @@ SLOTS.forEach(([slot, label]) => {
        <div><label style="cursor:pointer"><input type="checkbox" data-cen="${slot}" style="vertical-align:-2px"> enchant</label>
        <select data-cfx="${slot}" style="width:auto">${CFX.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select>
        + <input type="text" data-cmag="${slot}" value="${CBASE[bslot]||''}" style="width:44px" title="magnitude — applied only when the enchant box is checked${CBASE[bslot]?` · observed self-enchant max for this slot: ${CBASE[bslot]} (fortify-class)`:''}">
-       <span style="color:var(--muted)">${CBASE[bslot]?`max obs. ${CBASE[bslot]}`:''}</span></div>` +
-      (ARSLOT[slot] ? `<div style="margin-top:2px">AR <input type="text" data-car="${slot}" style="width:64px" title="The piece's tooltip AR exactly as shown in YOUR inventory — it already reflects your skill AND any Melding Construct bonus, so it is used as-is (no rescale and no Melding multiplier applied)."> as
-       <select data-cac="${slot}" style="width:auto"><option value="unarmored">Unarmored</option><option value="light">Light</option><option value="medium">Medium</option><option value="heavy">Heavy</option></select>
-       <span style="color:var(--muted)">Unarmored = clothing (AR ignored)</span></div>` : '') +
+       <span style="color:var(--muted)">${CBASE[bslot]?`max obs. ${CBASE[bslot]}`:''}</span></div>
+       <div data-cen2row="${slot}" style="display:none;margin-top:2px"><label style="cursor:pointer"><input type="checkbox" data-cen2="${slot}" style="vertical-align:-2px"> enchant 2</label>
+       <select data-cfx2="${slot}" style="width:auto">${CFX.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select>
+       + <input type="text" data-cmag2="${slot}" value="" style="width:44px" title="second enchantment magnitude — applied only when its box is checked"></div>` +
+      (ARSLOT[slot] ? `<div style="margin-top:2px">Armor Type <select data-cac="${slot}" style="width:auto" title="Unarmored = clothing: the Armor Rating field is ignored"><option value="unarmored">Unarmored</option><option value="light">Light</option><option value="medium">Medium</option><option value="heavy">Heavy</option></select>
+       &nbsp;Armor Rating <input type="text" data-car="${slot}" style="width:64px" disabled title="The piece's tooltip AR exactly as shown in YOUR inventory — it already reflects your skill AND any Melding Construct bonus, so it is used as-is (no rescale and no Melding multiplier applied). Editable once the armor type is Light/Medium/Heavy."></div>` : '') +
       `</div>`);
 });
 function SLOTBASE0(slot){ return SLOTBASE[slot]||slot; }
@@ -507,6 +510,11 @@ function calc(){
       const fx = document.querySelector(`[data-cfx="${slot}"]`).value;
       const mag = +document.querySelector(`[data-cmag="${slot}"]`).value || 0;
       if(en && mag) push(`${cnameOf(slot)||'User item enchant'} [${SLOTLBL[slot]||slot}]`, {[fx]: mag});
+      // v1.64: optional second enchantment (row appears once the first enchant box is checked)
+      const en2 = (document.querySelector(`[data-cen2="${slot}"]`)||{}).checked;
+      const fx2 = (document.querySelector(`[data-cfx2="${slot}"]`)||{}).value;
+      const mag2 = +((document.querySelector(`[data-cmag2="${slot}"]`)||{}).value) || 0;
+      if(en && en2 && mag2 && fx2) push(`${cnameOf(slot)||'User item enchant'} (2) [${SLOTLBL[slot]||slot}]`, {[fx2]: mag2});
       return;
     }
     const it = findItem(sel.value); if(it){
@@ -834,11 +842,13 @@ function calc(){
   // nothing). Equipment AR/encumbrance above stay live — they don't depend on the character selections.
   if(!ready){
     const need = [!el('race').value&&'race', !el('sign').value&&'birthsign', !el('cls').value&&'specialization'].filter(Boolean).join(', ');
-    el('tiles').innerHTML = '';   // v1.60: blank until race+sign+spec are chosen (hint text removed)
+    el('tiles').innerHTML = ''; el('tiles').classList.remove('on');   // v1.60: blank until race+sign+spec are chosen (hint text removed)
     el('resists').innerHTML = '';
     showStat = null; showRes = null;
-  } else
+  } else {
+  el('tiles').classList.add('on');   // v1.65: rule above the tiles once they expand
   el('tiles').innerHTML = tiles.map(t=>`<div class="tile${(showStat&&t[1]===showStat)||(showEq&&t[1]===showEq)?' sel':''}" data-k="${t[1]||''}"><div class="k${TITLECLS[t[1]]||''}">${t[0]}</div><div class="v">${t[2]}</div><div class="d">${t[3]}</div></div>`).join('');
+  }
   document.querySelectorAll('#col-equip .tile[data-k]').forEach(t=>t.classList.toggle('sel', showEq===t.dataset.k));
   const ss = el('strike'); if(ss) ss.addEventListener('change', calc);
   const rows = [['Fire','fire'],['Frost','frost'],['Shock','shock'],['Magicka','rmag'],['Poison','poison'],['Disease','disease'],['Normal Weapons','nw'],['Paralysis','para'],['Spell Absorption','absorb'],['Spell Reflect','reflect']];
@@ -1043,6 +1053,7 @@ function snapshot(){
     custom: Object.fromEntries([...document.querySelectorAll('#slots select[data-slot]')].filter(s=>s.value==='__custom__').map(s=>{const sl=s.dataset.slot;
       return [sl, {fx: document.querySelector(`[data-cfx="${sl}"]`).value, mag: document.querySelector(`[data-cmag="${sl}"]`).value,
         en: document.querySelector(`[data-cen="${sl}"]`).checked, nm: cnameOf(sl),
+        fx2: (document.querySelector(`[data-cfx2="${sl}"]`)||{}).value||'', mag2: (document.querySelector(`[data-cmag2="${sl}"]`)||{}).value||'', en2: !!(document.querySelector(`[data-cen2="${sl}"]`)||{}).checked,
         ar: (document.querySelector(`[data-car="${sl}"]`)||{}).value||'', ac: (document.querySelector(`[data-cac="${sl}"]`)||{}).value||''}];})),
     wts: Object.fromEntries([...document.querySelectorAll('[data-wt]')].filter(f=>f.value.trim()!=='').map(f=>[f.dataset.wt, f.value.trim()])),
     mast: [...document.querySelectorAll('#masteries input:checked')].map(cb=>DATA.masteries[+cb.dataset.mi].name) };
@@ -1081,6 +1092,9 @@ function restore(st){
       document.querySelector(`[data-cen="${sl}"]`).checked = c.en===undefined ? !!(+c.mag) : !!c.en;   // old saves: enchant was always-on
       const car = document.querySelector(`[data-car="${sl}"]`), cac = document.querySelector(`[data-cac="${sl}"]`);
       if(car) car.value = c.ar||''; if(cac) cac.value = c.ac||'unarmored';
+      if(car && cac) car.disabled = (cac.value==='unarmored');
+      const cen2=document.querySelector(`[data-cen2="${sl}"]`), cfx2=document.querySelector(`[data-cfx2="${sl}"]`), cmag2=document.querySelector(`[data-cmag2="${sl}"]`), r2=document.querySelector(`[data-cen2row="${sl}"]`);
+      if(cen2){ cen2.checked = !!c.en2; if(c.fx2) cfx2.value = c.fx2; cmag2.value = c.mag2||''; r2.style.display = document.querySelector(`[data-cen="${sl}"]`).checked ? '' : 'none'; }
       const si = document.querySelector(`#slots input[data-search="${sl}"]`);
       if(si){ si.value = c.nm||''; si.placeholder='name'; } }
   });
@@ -1131,7 +1145,9 @@ document.addEventListener('change', e=>{
     showShot(findItem(e.target.value));
   }
   if(e.target.id==='weapon') syncWt('__weapon');
-  if(e.target.matches('[data-cfx],[data-cmag],[data-cen],[data-car],[data-cac]')) { calc(); return; }
+  if(e.target.matches('[data-cen]')){ const r2 = document.querySelector(`[data-cen2row="${e.target.dataset.cen}"]`); if(r2) r2.style.display = e.target.checked ? '' : 'none'; }
+  if(e.target.matches('[data-cac]')){ const car = document.querySelector(`[data-car="${e.target.dataset.cac}"]`); if(car){ car.disabled = (e.target.value==='unarmored'); } }
+  if(e.target.matches('[data-cfx],[data-cmag],[data-cen],[data-car],[data-cac],[data-cfx2],[data-cmag2],[data-cen2]')) { calc(); return; }
   if(e.target.id==='weapon') showShot(e.target.value===''?null:DATA.weapons[+e.target.value]);
   if(!e.target.matches('input[data-search]')) calc();
 });
@@ -1263,5 +1279,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.63 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.65 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
