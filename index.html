@@ -802,7 +802,26 @@ function calc(){
     return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${v}%</td><td class="${cls}">${note}${extra}</td></tr>`;
   }).join('');
   renderBreakdown();
-  el('mpline').innerHTML = `Mastery Points Spent: <b style="color:var(--good)">${mp}</b>`;
+  // v1.47 (owner request 8/28): '500 Points Spent' gate check. Per KB masteries _meta (maintainer-ruled 8/24) the 500 must be
+  // spent on OTHER masteries before the gated purchase - its own cost never counts, and neither can anything that requires it
+  // (those can't exist yet). So for a selected master class: (total - own cost - its dependents' cost) must reach 500.
+  const gate500 = [];
+  document.querySelectorAll('#masteries input:checked').forEach(cb=>{
+    const i = +cb.dataset.mi, m = DATA.masteries[i];
+    if(!/500 (Mastery )?Points Spent/.test(m.gate||'')) return;
+    const down = new Set([i]); const stack=[i];
+    while(stack.length){ const x=stack.pop(); (DEPENDENTS[x]||[]).forEach(d=>{ if(!down.has(d)){ down.add(d); stack.push(d); } }); }
+    let excluded = 0;
+    document.querySelectorAll('#masteries input:checked').forEach(o=>{ const j=+o.dataset.mi; if(down.has(j)) excluded += DATA.masteries[j].cost; });
+    const before = mp - excluded;
+    if(before < 500) gate500.push({name:m.name, short:500-before, isMC:/Master Classes/.test(m.section)});
+  });
+  let warn = '';
+  if(gate500.length){
+    const w = gate500.reduce((a,b)=>b.short>a.short?b:a);
+    warn = ` <span style="color:var(--bad,#d9734f)">(warning: ${w.short} more MP must be selected to meet the ${w.name}${w.isMC?' Master Class':''} prerequisite — 500 MP spent before purchase)</span>`;
+  }
+  el('mpline').innerHTML = `Mastery Points Spent: <b style="color:var(--good)">${mp}</b>${warn}`;
   const fams = {};
   chosen.forEach(m=>{ (fams[m.fam]=fams[m.fam]||[]).push(m); });
   // Net-effect labels (owner feedback 8/24): each selected family shows what its owned ranks actually
@@ -1177,5 +1196,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.46 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.47 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
