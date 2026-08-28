@@ -300,15 +300,43 @@ Object.keys(sections).sort().forEach(sec=>{
   mh += `<details class="msec"${anyPlan?' open':''}><summary>${sec}</summary><div class="mgroup">${inner}</div></details>`;
 });
 el('masteries').innerHTML = mh;
+// v1.44 (owner request 8/28): prerequisite cascade. Checking a mastery also checks every mastery its gate
+// names (e.g. Soldier -> Soldier's Brawn 3 / Knack 3 / Toughness 3 / Intuition 3, each with its lower ranks;
+// Soldier's Cry -> Soldier -> ...), recursively. Unchecking a mastery unchecks everything that depends on it.
+// Gate tokens are matched to mastery names byte-for-byte after apostrophe normalization; "X Master Class" -> X;
+// "prior tier" and lower ranks are the existing same-family cascade. Level/attribute/skill/quest gates are ignored.
+const _apos = s => s.replace(/[\u2019\u2018]/g, "'").trim();
+const MIDX = {}; DATA.masteries.forEach((m,i)=>{ MIDX[_apos(m.name)] = i; });
+const PREREQ = DATA.masteries.map(m => {
+  const out = new Set();
+  (m.gate||'').split(',').forEach(tok => {
+    let t = _apos(tok); if(!t) return;
+    if(t.endsWith(' Master Class')) t = t.slice(0, -' Master Class'.length);
+    if(t in MIDX && MIDX[t] !== undefined) out.add(MIDX[t]);
+  });
+  return [...out];
+});
+const DEPENDENTS = DATA.masteries.map(()=>[]);
+PREREQ.forEach((ps,i)=>ps.forEach(p=>DEPENDENTS[p].push(i)));
+const cbOf = i => document.querySelector(`#masteries input[data-mi="${i}"]`);
+function cascadeOn(i, seen){
+  if(seen.has(i)) return; seen.add(i);
+  const cb = cbOf(i); if(!cb) return; cb.checked = true;
+  const fam = cb.dataset.fam, r = +cb.dataset.rank;
+  if(r) document.querySelectorAll(`#masteries input[data-fam="${fam}"]`).forEach(o=>{ const orank=+o.dataset.rank; if(orank && orank < r) o.checked = true; });
+  PREREQ[i].forEach(p=>cascadeOn(p, seen));
+}
+function cascadeOff(i, seen){
+  if(seen.has(i)) return; seen.add(i);
+  const cb = cbOf(i); if(!cb) return; cb.checked = false;
+  const fam = cb.dataset.fam, r = +cb.dataset.rank;
+  if(r) document.querySelectorAll(`#masteries input[data-fam="${fam}"]`).forEach(o=>{ const orank=+o.dataset.rank; if(orank && orank > r) cascadeOff(+o.dataset.mi, seen); });
+  DEPENDENTS[i].forEach(d=>{ const dc=cbOf(d); if(dc && dc.checked) cascadeOff(d, seen); });
+}
 document.querySelectorAll('#masteries input[data-rank]').forEach(cb=>{
   cb.addEventListener('change', ()=>{
-    const fam = cb.dataset.fam, r = +cb.dataset.rank;
-    if(!r) return;
-    document.querySelectorAll(`#masteries input[data-fam="${fam}"]`).forEach(o=>{
-      const orank = +o.dataset.rank;
-      if(cb.checked && orank && orank < r) o.checked = true;
-      if(!cb.checked && orank && orank > r) o.checked = false;
-    });
+    const i = +cb.dataset.mi;
+    if(cb.checked) cascadeOn(i, new Set()); else cascadeOff(i, new Set());
   });
 });
 el('clearmast').addEventListener('click', e=>{ e.preventDefault(); document.querySelectorAll('#masteries input').forEach(cb=>cb.checked=false); calc(); });
@@ -1148,5 +1176,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.43 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.44 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
