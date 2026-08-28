@@ -101,6 +101,7 @@ button:hover{border-color:var(--gold)}
 </div>
 <div class="slotgrp" style="margin:6px 0 2px;padding-top:6px;border-top:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);font-weight:700">⚔️ Weapon</div>
 <div class="slot" style="grid-template-columns:92px 70px 1fr 48px"><label></label><input type="text" id="wsearch" placeholder="search"><select id="weapon"></select><input type="text" data-wt="__weapon" placeholder="wt" title="Weapon weight — editable" style="width:44px"></div>
+<div class="customrow" data-cslot="__weapon" style="display:none;margin:-2px 0 6px;padding-left:98px;font-size:11px;color:var(--ink2)"></div>
 <div id="slots"></div>
 <div style="margin-top:10px;text-align:center"><img id="shot"><div id="shotcap"></div></div>
 </div></details>
@@ -198,21 +199,25 @@ const CBASE = {ring:55, amulet:55, helm:59, shield:88, shirt:29, pants:29, skirt
 const ARSLOT = {cuirass:1, helm:1, shield:1, greaves:1, feet:1, pauldronl:1, pauldronr:1, handl:1, handr:1};  // slots that take an armor piece
 const slotsDiv = el('slots');
 const SLOTEMOJI = {helm:'👑', cuirass:'⛓️', pauldronl:'💪', pauldronr:'💪', handl:'🧤', handr:'🧤', greaves:'🦵', feet:'🥾', shield:'🛡️', shirt:'👕', pants:'👖', skirt:'🩳', robe:'🧥', belt:'🔗', amulet:'📿', ring:'💍', ring2:'💍'};
+// v1.68: enchant rows (up to 8, chained) shared by user-specified armor/clothing slots and the weapon
+function enchRowsHtml(slot, bslot){
+  return Array.from({length:8},(_,j)=>j+1).map(k=>`<div class="crow" data-enrow="${slot}" data-ek="${k}" style="${k>1?'display:none;':''}"><label style="cursor:pointer"><input type="checkbox" data-cen="${slot}" data-ek="${k}" style="vertical-align:-2px"> enchant</label>
+       <select data-cfx="${slot}" data-ek="${k}">${CFX.map(([kk,n])=>`<option value="${kk}">${n}</option>`).join('')}</select>
+       <span style="text-align:right">+</span><input type="text" data-cmag="${slot}" data-ek="${k}" value="${k===1&&bslot?(CBASE[bslot]||''):''}" title="magnitude — applied only when this enchant box is checked${k===1&&bslot&&CBASE[bslot]?` · observed self-enchant max for this slot: ${CBASE[bslot]} (fortify-class)`:''}">
+       ${k===1?`<span style="color:var(--muted);white-space:nowrap;font-size:10px" title="observed self-enchant max for this slot">${bslot&&CBASE[bslot]?`max ${CBASE[bslot]}`:''}</span>`:'<span></span>'}</div>`).join('');
+}
 const SLOTGROUPS = {helm:'🛡️ Armor', shirt:'💍 Clothing &amp; jewelry'};   // divider headers before these slots
 SLOTS.forEach(([slot, label]) => {
   const bslot = SLOTBASE0(slot);
   if(SLOTGROUPS[slot]) slotsDiv.insertAdjacentHTML('beforeend', `<div class="slotgrp" style="margin:6px 0 2px;padding-top:6px;border-top:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);font-weight:700">${SLOTGROUPS[slot]}</div>`);
   slotsDiv.insertAdjacentHTML('beforeend', `<div class="slot" style="grid-template-columns:92px 70px 1fr 48px"><label>${(SLOTEMOJI[slot]||'')+' '+label}</label><input type="text" data-search="${slot}" placeholder="search"><select data-slot="${slot}">${buildOptions(slot,'')}</select><input type="text" data-wt="${slot}" placeholder="wt" title="Item weight — prefilled from data when known; type to correct. Resets when you change the item." style="width:44px"></div>` +
     `<div class="customrow" data-cslot="${slot}" style="display:none;margin:-2px 0 6px;padding-left:98px;font-size:11px;color:var(--ink2)">` +
-       // v1.66: up to 8 enchant rows; row k appears once row k-1 is checked (row 1 always visible)
-       Array.from({length:8},(_,j)=>j+1).map(k=>`<div class="crow" data-enrow="${slot}" data-ek="${k}" style="${k>1?'display:none;':''}"><label style="cursor:pointer"><input type="checkbox" data-cen="${slot}" data-ek="${k}" style="vertical-align:-2px"> enchant</label>
-       <select data-cfx="${slot}" data-ek="${k}">${CFX.map(([kk,n])=>`<option value="${kk}">${n}</option>`).join('')}</select>
-       <span style="text-align:right">+</span><input type="text" data-cmag="${slot}" data-ek="${k}" value="${k===1?(CBASE[bslot]||''):''}" title="magnitude — applied only when this enchant box is checked${k===1&&CBASE[bslot]?` · observed self-enchant max for this slot: ${CBASE[bslot]} (fortify-class)`:''}">
-       ${k===1?`<span style="color:var(--muted);white-space:nowrap;font-size:10px" title="observed self-enchant max for this slot">${CBASE[bslot]?`max ${CBASE[bslot]}`:''}</span>`:'<span></span>'}</div>`).join('') +
+       enchRowsHtml(slot, bslot) +
       (ARSLOT[slot] ? `<div class="crow"><span>Armor Type</span><select data-cac="${slot}" title="Unarmored = clothing: the Armor Rating field is ignored"><option value="unarmored">Unarmored</option><option value="light">Light</option><option value="medium">Medium</option><option value="heavy">Heavy</option></select>
        <span style="text-align:right;white-space:nowrap">Armor Rating</span><input type="text" data-car="${slot}" value="0" style="opacity:.4" disabled title="The piece's tooltip AR exactly as shown in YOUR inventory — it already reflects your skill AND any Melding Construct bonus, so it is used as-is (no rescale and no Melding multiplier applied). Editable once the armor type is Light/Medium/Heavy."><span></span></div>` : '') +
       `</div>`);
 });
+document.querySelector('.customrow[data-cslot="__weapon"]').innerHTML = enchRowsHtml('__weapon', null);
 function SLOTBASE0(slot){ return SLOTBASE[slot]||slot; }
 document.querySelectorAll('#slots input[data-search]').forEach(inp=>{
   inp.addEventListener('input', ()=>{
@@ -242,13 +247,14 @@ function buildWeaponOptions(filter){
   let pool = DATA.weapons.map((w,i)=>[w,i]).filter(([w])=>(!w.clsreq || w.clsreq.includes(cls)));
   if(!f){
     const top = pool.slice().sort((a,b)=>wscore(b[0])-wscore(a[0])).slice(0,10);
-    return `<option value="">— none —</option><optgroup label="TOP PICKS — type in search for all ${pool.length} weapons">` + top.map(opt).join('') + '</optgroup>';
+    return `<option value="">— none —</option><option value="__custom__">⚒ USER-SPECIFIED WEAPON…</option><optgroup label="TOP PICKS — type in search for all ${pool.length} weapons">` + top.map(opt).join('') + '</optgroup>';
   }
-  return '<option value="">— none —</option>' + pool.filter(([w])=>w.name.toLowerCase().includes(f)).sort((a,b)=>wscore(b[0])-wscore(a[0])).map(opt).join('');
+  return '<option value="">— none —</option><option value="__custom__">⚒ USER-SPECIFIED WEAPON…</option>' + pool.filter(([w])=>w.name.toLowerCase().includes(f)).sort((a,b)=>wscore(b[0])-wscore(a[0])).map(opt).join('');
 }
 function ensureWeaponOption(val){
   const s = el('weapon');
   if(val===''||val===undefined||val===null){ s.value=''; return; }
+  if(val==='__custom__'){ s.value='__custom__'; return; }   // v1.68: user-specified weapon
   // v1.31: accept an exact weapon NAME (portable across data versions); numeric index stays as legacy
   if(!/^\d+$/.test(String(val)) || !DATA.weapons[+val] ){
     const _i = DATA.weapons.findIndex(w=>w.name===String(val));
@@ -263,6 +269,7 @@ function ensureWeaponOption(val){
 el('weapon').innerHTML = buildWeaponOptions('');
 el('wsearch').addEventListener('input', ()=>{
   const cur = el('weapon').value;
+  if(cur==='__custom__'){ calc(); return; }   // v1.68: field is the user-specified weapon's name
   el('weapon').innerHTML = buildWeaponOptions(el('wsearch').value);
   ensureWeaponOption(cur);
 });
@@ -464,6 +471,7 @@ function syncWt(slot){
   const f = document.querySelector(`[data-wt="${slot}"]`); if(!f) return;
   if(slot==='__weapon'){
     const v = el('weapon').value;
+    if(v==='__custom__'){ f.value=''; f.placeholder='?'; return; }
     const w = v==='' ? null : DATA.weapons[+v];
     f.value = (w && w.wt!==undefined) ? w.wt : '';
     f.placeholder = v==='' ? 'wt' : ((w && w.wt!==undefined) ? 'wt' : '?');
@@ -504,17 +512,20 @@ function calc(){
   if(el('sign').value) push('Sign: '+el('sign').value, sign.fx, 'sign');
   // Native magicka regen: 1 Magicka/tick for everyone EXCEPT Stunted Magicka (Atronach) — measured 8/21
   if(el('sign').value !== 'Atronach') push('Native regen (non-Stunted)', {mot: 1}, 'base');
+  // v1.66/68: chained enchant rows — apply row k only while every row before it is checked
+  const pushCustomEnch = (slot, nm, lbl) => {
+    for(let k=1;k<=8;k++){
+      const cb = document.querySelector(`[data-cen="${slot}"][data-ek="${k}"]`); if(!cb || !cb.checked) break;
+      const fx = document.querySelector(`[data-cfx="${slot}"][data-ek="${k}"]`).value;
+      const mag = +document.querySelector(`[data-cmag="${slot}"][data-ek="${k}"]`).value || 0;
+      if(mag && fx) push(`${nm}${k>1?` (${k})`:''} [${lbl}]`, {[fx]: mag});
+    }
+  };
   const SLOTLBL = Object.fromEntries(SLOTS);
   document.querySelectorAll('#slots select[data-slot]').forEach(sel=>{
     const slot = sel.dataset.slot;
     if(sel.value === '__custom__'){
-      // v1.66: chained enchant rows — apply row k only while every row before it is checked
-      for(let k=1;k<=8;k++){
-        const cb = document.querySelector(`[data-cen="${slot}"][data-ek="${k}"]`); if(!cb || !cb.checked) break;
-        const fx = document.querySelector(`[data-cfx="${slot}"][data-ek="${k}"]`).value;
-        const mag = +document.querySelector(`[data-cmag="${slot}"][data-ek="${k}"]`).value || 0;
-        if(mag && fx) push(`${cnameOf(slot)||'User item enchant'}${k>1?` (${k})`:''} [${SLOTLBL[slot]||slot}]`, {[fx]: mag});
-      }
+      pushCustomEnch(slot, cnameOf(slot)||'User item enchant', SLOTLBL[slot]||slot);
       return;
     }
     const it = findItem(sel.value); if(it){
@@ -522,8 +533,12 @@ function calc(){
     push(`${it.name}${half?' (½ pair)':''} [${SLOTLBL[slot]||slot}]`, half ? halfStats(it.stats) : it.stats);
     if(it.rtick) TICKS.push(it.name); } });
   const wv = el('weapon').value;
-  const w = wv === '' ? {name:'(no weapon)', speed:0, speed_known:true, range:0, base:0, note:'', stats:{}} : DATA.weapons[+wv];
-  if(wv !== '') push(w.name+' [Weapon]', w.stats);
+  const wCustom = wv === '__custom__';   // v1.68: user-specified weapon — enchants only, damage not modeled
+  const w = wv === '' ? {name:'(no weapon)', speed:0, speed_known:true, range:0, base:0, note:'', stats:{}}
+          : wCustom ? {name:(el('wsearch').value.trim()||'User-specified weapon'), speed:0, speed_known:false, range:0, base:0, note:'user-specified', dmgmax:0, dmgtype:'', stats:{}}
+          : DATA.weapons[+wv];
+  if(wv !== '' && !wCustom) push(w.name+' [Weapon]', w.stats);
+  if(wCustom) pushCustomEnch('__weapon', w.name, 'Weapon');
   let mp = 0, fs2 = false; const chosen = [];
   document.querySelectorAll('#masteries input:checked').forEach(cb=>{
     const m = DATA.masteries[+cb.dataset.mi]; mp += m.cost; chosen.push(m);
@@ -829,8 +844,8 @@ function calc(){
     ...(sum('fistdmg')? [['Fist Dmg','fistdmg', r1(sum('fistdmg')), 'Iron Fist (% of gauntlet AR)']] : []),
     // Row 5 — damage/armor (Unknown when an input is unverified — KB rule 8: no estimated numbers in results)
     ['Encumbrance','enc', ENCTOT + (typeof encUnk!=='undefined'&&encUnk?' +?':''), featherTot?`− ${Math.round(featherTot*10)/10} feather`:''],
-    ['Hit Damage','hit', noW?'—':Math.round(hitDmg),
-      noW?'no weapon':`${w.dmgtype} ${w.dmgmax} × Str mod ${Math.round(strMod*100)/100}` +
+    ['Hit Damage','hit', (noW||wCustom)?'—':Math.round(hitDmg),
+      noW?'no weapon':wCustom?'user-specified weapon — damage not modeled':`${w.dmgtype} ${w.dmgmax} × Str mod ${Math.round(strMod*100)/100}` +
       (skOwned&&sk.kind==='cd'?` · +${Math.round(procDmg)} ${sk.n} (${sk.cd}s)`:'') +
       (skOwned&&sk.kind==='proc'?` · +${Math.round(procDmg)} on ${proc.toFixed(0)}% proc`:'')],
     ['Armor','ar', ARUNK.length?'Unknown':armorTotal, ARUNK.length?`${ARUNK.length} piece(s) with unverified AR`:`weighted ${Math.floor(wAR)}${meldMult!==1?` (Melding ${meldRank} ×${meldMult.toFixed(2)})`:''}${shieldFlat?` + Shield ${shieldFlat}`:''}${armorBonusFlat?` + Bonus ${armorBonusFlat}`:''}`],
@@ -842,7 +857,8 @@ function calc(){
   // nothing). Equipment AR/encumbrance above stay live — they don't depend on the character selections.
   if(!ready){
     const need = [!el('race').value&&'race', !el('sign').value&&'birthsign', !el('cls').value&&'specialization'].filter(Boolean).join(', ');
-    el('tiles').innerHTML = ''; el('tiles').classList.remove('on');   // v1.60: blank until race+sign+spec are chosen (hint text removed)
+    el('tiles').classList.add('on');   // v1.67 (owner wording): note in place of the tiles until race+sign+spec are chosen
+    el('tiles').innerHTML = `<div style="grid-column:1/-1;padding:10px 4px;color:var(--ink2);font-size:12px">Fill in the above selections to compute character statistics.</div>`;
     el('resists').innerHTML = '';
     showStat = null; showRes = null;
   } else {
@@ -1056,6 +1072,7 @@ function snapshot(){
       return [sl, {fx: rows[0].fx, mag: rows[0].mag, en: rows[0].en, nm: cnameOf(sl),   // legacy first-row fields kept for older readers
         ench: rows.slice(0, Math.max(last,1)),
         ar: (document.querySelector(`[data-car="${sl}"]`)||{}).value||'', ac: (document.querySelector(`[data-cac="${sl}"]`)||{}).value||''}];})),
+    wcustom: el('weapon').value==='__custom__' ? {nm: el('wsearch').value.trim(), ench: enchRowsState('__weapon')} : undefined,
     wts: Object.fromEntries([...document.querySelectorAll('[data-wt]')].filter(f=>f.value.trim()!=='').map(f=>[f.dataset.wt, f.value.trim()])),
     mast: [...document.querySelectorAll('#masteries input:checked')].map(cb=>DATA.masteries[+cb.dataset.mi].name) };
 }
@@ -1070,7 +1087,7 @@ function restore(st){
     if(+st.unarm === 130 + (clan==='Berne'?20:0)) st.unarm = '100';
     if(+st.skh === 100 + (clan==='Quarra'?20:0)) st.skh = '100';
   }
-  el('lvl').value = st.lvl!=null && st.lvl!=='' ? st.lvl : '60'; el('race').value = st.race; el('sign').value = st.sign; el('cls').value = st.cls!=null ? st.cls : 'Stealth'; filterClass(); refreshPresets(); ensureWeaponOption(st.weapon); el('unarm').value = st.unarm||'100'; el('sk_light').value = st.skl||'100'; el('sk_medium').value = st.skm||'100'; el('sk_heavy').value = st.skh||'100'; el('vamp').checked = !!st.vamp; if(el('vampclan')) el('vampclan').value = st.vampclan || 'Aundae'; if(el('vamp').checked){ syncVamp(); } else { const _w=el('vampclanwrap'); if(_w) _w.style.display='none'; } el('wolf').checked = !!st.wolf; if(el('strike') && st.strike) el('strike').value = st.strike;
+  el('lvl').value = st.lvl!=null && st.lvl!=='' ? st.lvl : '60'; el('race').value = st.race; el('sign').value = st.sign; el('cls').value = st.cls!=null ? st.cls : 'Stealth'; filterClass(); refreshPresets(); ensureWeaponOption(st.weapon); if(st.weapon==='__custom__'){ const wc=st.wcustom||{}; el('wsearch').value = wc.nm||''; restoreEnchRows('__weapon', Array.isArray(wc.ench)?wc.ench:[]); } else restoreEnchRows('__weapon', []); document.querySelector('.customrow[data-cslot="__weapon"]').style.display = st.weapon==='__custom__' ? '' : 'none'; el('unarm').value = st.unarm||'100'; el('sk_light').value = st.skl||'100'; el('sk_medium').value = st.skm||'100'; el('sk_heavy').value = st.skh||'100'; el('vamp').checked = !!st.vamp; if(el('vampclan')) el('vampclan').value = st.vampclan || 'Aundae'; if(el('vamp').checked){ syncVamp(); } else { const _w=el('vampclanwrap'); if(_w) _w.style.display='none'; } el('wolf').checked = !!st.wolf; if(el('strike') && st.strike) el('strike').value = st.strike;
   document.querySelectorAll('#slots input[data-search]').forEach(i=>{i.value=''; i.placeholder='search';});
   const sl = Object.assign({}, st.slots);
   if(sl.pauldron && !sl.pauldronl){ sl.pauldronl = sl.pauldron; sl.pauldronr = sl.pauldron; }   // migrate old saves
@@ -1139,6 +1156,18 @@ el('loadfile').addEventListener('change', ()=>{
 });
 // v1.59: preset loader removed with the Presets row
 // v1.66: enchant-row chaining + Armor Rating gating for user-specified equipment
+function enchRowsState(slot){
+  const rows = Array.from({length:8},(_,j)=>j+1).map(k=>({fx: document.querySelector(`[data-cfx="${slot}"][data-ek="${k}"]`).value, mag: document.querySelector(`[data-cmag="${slot}"][data-ek="${k}"]`).value, en: document.querySelector(`[data-cen="${slot}"][data-ek="${k}"]`).checked}));
+  let last = 0; for(let k=0;k<8;k++){ if(!rows[k].en) break; last = k+1; }
+  return rows.slice(0, Math.max(last,1));
+}
+function restoreEnchRows(slot, rows){
+  for(let k=1;k<=8;k++){
+    const r = rows[k-1]; const cb=document.querySelector(`[data-cen="${slot}"][data-ek="${k}"]`), fxs=document.querySelector(`[data-cfx="${slot}"][data-ek="${k}"]`), mg=document.querySelector(`[data-cmag="${slot}"][data-ek="${k}"]`);
+    cb.checked = !!(r && r.en); if(r && r.fx) fxs.value = r.fx; mg.value = r ? (r.mag||'') : '';
+  }
+  syncEnchRows(slot);
+}
 function syncEnchRows(slot){
   let show = true;
   for(let k=1;k<=8;k++){
@@ -1163,11 +1192,12 @@ document.addEventListener('change', e=>{
     syncWt(e.target.dataset.slot);
     showShot(findItem(e.target.value));
   }
-  if(e.target.id==='weapon') syncWt('__weapon');
+  if(e.target.id==='weapon'){ syncWt('__weapon'); const r = document.querySelector('.customrow[data-cslot="__weapon"]'); r.style.display = e.target.value==='__custom__' ? '' : 'none';
+    const ws = el('wsearch'); const isC = e.target.value==='__custom__'; if((ws.placeholder==='name') !== isC){ ws.value=''; ws.placeholder = isC?'name':'search'; } }
   if(e.target.matches('[data-cen]')) syncEnchRows(e.target.dataset.cen);
   if(e.target.matches('[data-cac]')) syncCar(e.target.dataset.cac);
   if(e.target.matches('[data-cfx],[data-cmag],[data-cen],[data-car],[data-cac]')) { calc(); return; }
-  if(e.target.id==='weapon') showShot(e.target.value===''?null:DATA.weapons[+e.target.value]);
+  if(e.target.id==='weapon') showShot((e.target.value===''||e.target.value==='__custom__')?null:DATA.weapons[+e.target.value]);
   if(!e.target.matches('input[data-search]')) calc();
 });
 document.addEventListener('click', e=>{
@@ -1182,7 +1212,7 @@ document.addEventListener('click', e=>{
   // clicking a slot/weapon select always refreshes the item image, even when the value doesn't change
   const s = e.target.closest('#slots select');
   if(s && s.value) showShot(findItem(s.value));
-  if(e.target.closest('#weapon') && el('weapon').value!=='') showShot(DATA.weapons[+el('weapon').value]);
+  if(e.target.closest('#weapon') && el('weapon').value!=='' && el('weapon').value!=='__custom__') showShot(DATA.weapons[+el('weapon').value]);
 });
 el('unequipall').addEventListener('click', e=>{
   e.preventDefault(); e.stopPropagation();
@@ -1191,7 +1221,7 @@ el('unequipall').addEventListener('click', e=>{
   document.querySelectorAll('.customrow').forEach(r=>r.style.display='none');
   document.querySelectorAll('[data-cen]').forEach(cb=>cb.checked=false); document.querySelectorAll('[data-cac]').forEach(sl=>{ sl.value='unarmored'; syncCar(sl.dataset.cac); }); document.querySelectorAll('.customrow').forEach(r=>syncEnchRows(r.dataset.cslot));
   document.querySelectorAll('[data-wt]').forEach(f=>{f.value='';f.placeholder='wt';});
-  el('wsearch').value=''; el('weapon').innerHTML = buildWeaponOptions(''); el('weapon').value='';   // v1.59: Clear all also drops the weapon
+  el('wsearch').value=''; el('wsearch').placeholder='search'; el('weapon').innerHTML = buildWeaponOptions(''); el('weapon').value='';   // v1.59: Clear all also drops the weapon
   showShot(null); calc();
 });
 // v1.59: Character pane Clear all — level/race/sign/spec/vampire/werewolf back to blank-slate defaults
@@ -1299,5 +1329,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.66 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.68 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
