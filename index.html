@@ -258,36 +258,55 @@ el('wsearch').addEventListener('input', ()=>{
   el('weapon').innerHTML = buildWeaponOptions(el('wsearch').value);
   ensureWeaponOption(cur);
 });
+// v1.48 (owner request 8/28): Skill Masteries are grouped by the vanilla skill category of the skill they improve
+// (Combat / Magic / Stealth), labeled "<Skill> - <Family>" and sorted by skill; the General section is renamed
+// "Attribute Masteries" and its Fort-Max group carries no subhead (rendered first, unlabeled).
+const SKILLCAT = {Armorer:'Combat',Athletics:'Combat',Axe:'Combat','Blunt Weapon':'Combat',Block:'Combat','Heavy Armor':'Combat','Long Blade':'Combat','Medium Armor':'Combat',Spear:'Combat',
+  Alchemy:'Magic',Alteration:'Magic',Conjuration:'Magic',Destruction:'Magic',Enchant:'Magic',Illusion:'Magic',Mysticism:'Magic',Restoration:'Magic',Unarmored:'Magic',
+  Acrobatics:'Stealth','Hand-to-Hand':'Stealth','Light Armor':'Stealth',Marksman:'Stealth',Mercantile:'Stealth',Security:'Stealth','Short Blade':'Stealth',Sneak:'Stealth',Speechcraft:'Stealth'};
+const TOPPICKS = ['Godborn','God Touched'];   // rendered as standalone checkboxes above the sections
 const FOCUS = m => {
   const f = m.fx||{};
+  if(m.section==='Skill Masteries') return SKILLCAT[m.skill] || 'Other';
   if(m.name.includes('Blessing')) return 'Blessings (resists)';
-  if(Object.keys(f).some(k=>k.endsWith('_cap'))) return 'Attributes & Fort-Max';
+  if(Object.keys(f).some(k=>k.endsWith('_cap'))) return m.section==='General Masteries' ? '' : 'Attributes & Fort-Max';
   if(f.hp||f.mag||f.fat||f.hot||f.mot||f.fot) return 'HP / Magicka / Fatigue';
   if(f.fire||f.frost||f.shock||f.rmag||f.poison||f.disease||f.nw||f.para) return 'Resists';
   if(f.attack||f.sanc) return 'Attack / Evasion';
   return 'Other / Powers';
 };
 const sections = {};
+const topPicks = [];
 DATA.masteries.forEach((m,i)=>{
+  if(TOPPICKS.includes(m.name)){ topPicks.push([m,i]); return; }
   const sec0 = m.section.replace(/:$/,'');
-  const sec = ['Altmer','Breton','Dunmer','Argonian','Bosmer','Imperial','Khajiit','Nord','Orc','Redguard','Racial Master Classes'].includes(sec0) ? 'Racial' : sec0;
+  const sec = ['Altmer','Breton','Dunmer','Argonian','Bosmer','Imperial','Khajiit','Nord','Orc','Redguard','Racial Master Classes'].includes(sec0) ? 'Racial'
+            : sec0==='General Masteries' ? 'Attributes' : sec0==='Skill Masteries' ? 'Skills' : sec0==='Were-Hunter Specialization' ? 'Were-Hunter' : sec0;
   (sections[sec] = sections[sec]||{});
   const foc = FOCUS(m);
   (sections[sec][foc] = sections[sec][foc]||{});
-  (sections[sec][foc][m.fam] = sections[sec][foc][m.fam]||[]).push([m,i]);
+  const famKey = m.section==='Skill Masteries' && m.skill ? `${m.skill} - ${m.fam}` : m.fam;
+  (sections[sec][foc][famKey] = sections[sec][foc][famKey]||[]).push([m,i]);
 });
 let mh = '';
+if(topPicks.length){
+  mh += '<div class="fam" style="margin:2px 0 8px;padding:6px 10px;border:1px solid var(--line);border-radius:6px"><span class="nm">' +
+    topPicks.sort((a,b)=>a[0].name.localeCompare(b[0].name)).map(([m,i])=>{
+      const tip = `${m.name} — ${m.cost} MP — ${m.raw||''}${m.gate?` — ${m.gate}`:''}`;
+      return `<label title="${tip}" style="margin-right:14px"><input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(m.fam)}" data-rank="0"> <b>${m.name}</b> <span style="color:var(--muted);font-size:10.5px">${m.raw||''}</span> <span style="color:#5a5142">${m.cost}mp</span></label>`;
+    }).join('') + '</span></div>';
+}
 Object.keys(sections).sort().forEach(sec=>{
   const foci = sections[sec];
   const anyPlan = Object.values(foci).some(fams=>Object.values(fams).some(list=>list.some(([m])=>m.plan)));
   let inner = '';
   Object.keys(foci).sort().forEach(foc=>{
-    inner += `<div class="subhead">${foc}</div>`;
+    if(foc) inner += `<div class="subhead">${foc}</div>`;
     Object.keys(foci[foc]).sort().forEach(fam=>{
       const list = foci[foc][fam].sort((a,b)=>a[0].rank-b[0].rank);
       const total = list.reduce((s,[m])=>s+m.cost,0);
       const aff = list[0][0].aff;
-      const gate = list.map(([m])=>m.gate).find(Boolean);
+      const gate = list[0][0].section==='Skill Masteries' ? '' : list.map(([m])=>m.gate).find(Boolean);
       const fxsum = list.length===1 ? Object.entries(list[0][0].fx).map(([k,v])=>`${STATNAMES[k]||k} ${v>0?'+':''}${v}`).join(', ') : '';
       const ranks = list.map(([m,i])=>{
         const tip = `${m.name} — ${m.cost} MP — ${Object.entries(m.fx).map(([k,v])=>k.endsWith('_cap')?`cap ${STATNAMES[k.replace('_cap','')]||k} +${v}`:`${STATNAMES[k]||k} ${v>0?'+':''}${v}`).join(', ')||m.raw||'no sheet effect'}`;
@@ -1196,5 +1215,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.47 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.48 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
