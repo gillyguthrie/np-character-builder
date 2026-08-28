@@ -1040,6 +1040,15 @@ function renderOne(bd, key){
       const capsum = capraw.reduce((a,c)=>a+c.v,0);
       list.push({t:'note', n:1, src:`Cap = 175 base + ${capsum} raises = ${175+capsum} — the raw total is clamped to this cap`});
     }
+    // v1.75 (owner request 8/28): capped attributes/skills report the CAPPED value in the header and
+    // 'value / cap (+N over cap)' on the Total line, matching the tiles.
+    const CAPPED = ['agi','str','end','spe','int','wil','per','luc','dest','athl'];
+    if(CAPPED.includes(key)){
+      const capv = 175 + capraw.reduce((a,c)=>a+c.v,0);
+      const rawTot = total;
+      total = Math.min(rawTot, capv);
+      var totalLine = `${total} / ${capv}${rawTot>capv?` <span class="neg">(+${rawTot-capv} over cap)</span>`:''}`;
+    }
   }
   let extra = '';
   if(key==='rhp' && TICKS.length) extra = TICKS.map(t=>`<div><span>${t} (hidden HoT)</span><span>?/tick</span></div>`).join('');
@@ -1060,7 +1069,7 @@ function renderOne(bd, key){
     body = list.map(c=>`<div><span>${c.src}</span><span class="${typeof c.v==='number'&&c.v<0?'neg':''}">${fmt(c.v)}</span></div>`).join('');
   }
   bd.innerHTML = `<h3>${LONGNAMES[key]||key} = ${total}</h3>` + body + extra +
-    `<div style="border-top:1px solid var(--line);margin-top:2px"><span><b>Total</b></span><span><b>${total}</b></span></div>`;
+    `<div style="border-top:1px solid var(--line);margin-top:2px"><span><b>Total</b></span><span><b>${typeof totalLine!=='undefined'?totalLine:total}</b></span></div>`;
   bd.style.display='block';
 }
 function renderBreakdown(){
@@ -1334,5 +1343,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.74 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.75 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
