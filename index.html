@@ -808,7 +808,9 @@ function calc(){
       ELIG.map(([k,a])=>`<option value="${k}"${k===skKey?' selected':''}>${a.n}</option>`).join('') + `</select>`
     : `<span style="font-size:10px">no ability unlocked — check a strike/ability mastery</span>`;
   const r1 = v => Math.round(v*10)/10;
-  const atile = a => attr(a) + (sum(a)>cap(a)?` <span style="font-size:11px;color:var(--muted)">(raw ${sum(a)})</span>`:'');
+  // v1.73 (owner request 8/28): capped tiles read 'value / cap'; the raw total moves to the subtext when over the cap
+  const atile = a => `${attr(a)} <span style="font-size:14px;color:var(--muted)">/ ${cap(a)}</span>`;
+  const asub = a => sum(a)>cap(a) ? `raw ${sum(a)}` : '';
   const noW = wv === '';
   // Fix #6, REVISED 8/24 (owner-ruled, KB fact:overmax-system / fact:overmax-magicka-bug): overmax is
   // CAP-RELATIVE — a stat is overmaxed only when its RAW total exceeds the character's cap (175 base +
@@ -817,14 +819,14 @@ function calc(){
   const intOvermax = sum('int') > cap('int');
   const speck = (CLSKEY[CLS]||CLSKEY.Stealth)[0];   // spec attribute — shown in Row 1
   // Row 2/3 attribute tiles must never duplicate the spec attribute; surface Agility in the slot it would occupy.
-  const atTile = a0 => { const a = (a0===speck) ? 'agi' : a0; return [STATNAMES[a], a, atile(a), `cap ${cap(a)}${(a==='int'&&intOvermax)?` · <span style="color:var(--bad)">⚠ overmax: raw ${sum('int')} > cap ${cap('int')}</span>`:''}`]; };
+  const atTile = a0 => { const a = (a0===speck) ? 'agi' : a0; return [STATNAMES[a], a, atile(a), `${asub(a)}${(a==='int'&&intOvermax)?` <span style="color:var(--bad)">⚠ overmax: raw ${sum('int')} > cap ${cap('int')}</span>`:''}`]; };
   const tiles = [
     // Row 0 — flat pools (regen absorbed as subtext; tick=6s confirmed)
     ['Health','hp0', totHP, `regen ${r1(hpreg)}/s${TICKS.length?' +?':''}${hfSum?` · ×${hpFactor.toFixed(2)} HF`:''}`],
     ['Magicka','mag0', totMag, `regen ${r1(mpreg)}/s${intOvermax?` · <span style="color:var(--bad)">⚠ INT overmaxed (raw ${sum('int')} > cap ${cap('int')}) — in-game pool corrupts/re-rolls per relog</span>`:''}`],
     ['Fatigue','fat0', totFat, `regen ${r1(fatreg)}/s`],
     // Row 1 — class key attribute + strike
-    [`${STATNAMES[speck]}`, speck, atile(speck), `cap ${cap(speck)}${(speck==='int'&&intOvermax)?` · <span style="color:var(--bad)">⚠ overmax: raw ${sum('int')} > cap ${cap('int')}</span>`:''}`],
+    [`${STATNAMES[speck]}`, speck, atile(speck), `${asub(speck)}${(speck==='int'&&intOvermax)?` <span style="color:var(--bad)">⚠ overmax: raw ${sum('int')} > cap ${cap('int')}</span>`:''}`],
     ['Ability','proc', !skOwned?'—':(sk.kind==='proc'?proc.toFixed(1)+'%':(sk.kind==='cd'?`every ${sk.cd}s`:'cast')), strikeSel],
     [skOwned?sk.n+' Damage':'Ability Damage','abildmg', skOwned?Math.round(procDmg):'—', skOwned?(sk.mods.length?sk.mods.map(([st,f])=>`${Math.round(f*100)}% ${STATNAMES[st]} (${attr(st)})`).join(' + '):(sk.note||'flat')):'no ability unlocked'],
     // Row 2 — physical attrs (spec attr replaced by Agility to avoid a duplicate)
@@ -836,8 +838,8 @@ function calc(){
     atTile('wil'),
     atTile('luc'),
     // Row 4 — mobility/evasion/combat
-    ['Destruction','dest', atile('dest'), ''],
-    ['Athletics','athl', atile('athl'), `cap ${cap('athl')}`],
+    ['Destruction','dest', atile('dest'), asub('dest')],   // v1.72: capped at 175 + Destruction Fortification Max from masteries; attr('dest') clamps to it
+    ['Athletics','athl', atile('athl'), asub('athl')],
     ['Sanctuary','sanc', sum('sanc'), ''],
     ['Chameleon','cham', r1(sum('cham')), ''],
     ['Dodge','dodge', sum('dodge'), ''],
@@ -1332,5 +1334,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.71 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.73 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
