@@ -824,7 +824,7 @@ function calc(){
     ['Magicka','mag0', totMag, `regen ${r1(mpreg)}/s${intOvermax?` · <span style="color:var(--bad)">⚠ INT overmaxed (raw ${sum('int')} > cap ${cap('int')}) — in-game pool corrupts/re-rolls per relog</span>`:''}`],
     ['Fatigue','fat0', totFat, `regen ${r1(fatreg)}/s`],
     // Row 1 — class key attribute + strike
-    [`${STATNAMES[speck]} (Spec Attribute)`, speck, atile(speck), `cap ${cap(speck)}${(speck==='int'&&intOvermax)?` · <span style="color:var(--bad)">⚠ overmax: raw ${sum('int')} > cap ${cap('int')}</span>`:''}`],
+    [`${STATNAMES[speck]}`, speck, atile(speck), `cap ${cap(speck)}${(speck==='int'&&intOvermax)?` · <span style="color:var(--bad)">⚠ overmax: raw ${sum('int')} > cap ${cap('int')}</span>`:''}`],
     ['Ability','proc', !skOwned?'—':(sk.kind==='proc'?proc.toFixed(1)+'%':(sk.kind==='cd'?`every ${sk.cd}s`:'cast')), strikeSel],
     [skOwned?sk.n+' Damage':'Ability Damage','abildmg', skOwned?Math.round(procDmg):'—', skOwned?(sk.mods.length?sk.mods.map(([st,f])=>`${Math.round(f*100)}% ${STATNAMES[st]} (${attr(st)})`).join(' + '):(sk.note||'flat')):'no ability unlocked'],
     // Row 2 — physical attrs (spec attr replaced by Agility to avoid a duplicate)
@@ -1332,5 +1332,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.69 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.70 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
