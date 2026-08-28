@@ -73,7 +73,6 @@ button:hover{border-color:var(--gold)}
 .mpline{font-size:12px;color:var(--ink2);margin-top:10px}
 </style></head><body>
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><h1 style="margin:0">Nerevarine Prophecies Character Builder</h1><button id="clearall" type="button" title="Reset the whole builder to defaults — race, birthsign, spec, all masteries, equipment, weapon, armor skills, vampire/werewolf" style="flex:none">Clear everything</button></div>
-<div style="font-size:12px;color:var(--ink2);margin:-6px 0 10px">Click any tile or resistance row to see its breakout. This tool assumes 100 base attributes.</div>
 <div class="saverow">
   <span style="color:var(--ink2);font-size:12px">Loadout:</span>
   <input type="text" id="savename" placeholder="loadout name" style="width:160px">
@@ -101,7 +100,8 @@ button:hover{border-color:var(--gold)}
 <div style="margin-top:10px;text-align:center"><img id="shot"><div id="shotcap"></div></div>
 </div></details>
 <details class="col" id="col-char" open><summary><span>Character</span><button id="clearchar" type="button" class="paneclear" title="Reset level, race, birthsign, spec, vampire and werewolf">Clear all</button></summary><div class="colbody">
-<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Level</label><div id="lvlrow" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;row-gap:4px;font-size:12px;color:var(--ink2)"><input type="text" id="lvl" value="60" style="width:44px;flex:none" title="Character level (default 60). Saved with the loadout; pool formulas still assume level 60 for now.">
+<div style="font-size:12px;color:var(--ink);margin:2px 0 6px">Level 60, all attributes and skills at 100.</div><input type="hidden" id="lvl" value="60">
+<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)"></label><div id="lvlrow" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;row-gap:4px;font-size:12px;color:var(--ink2)">
   <label style="display:flex;gap:5px;align-items:center" title="Passives: +20 Agi/Str/Wil/Spe · +30 Unarmored/Sneak/Hand-to-Hand/Athletics/Destruction/Illusion/Mysticism/Acrobatics · Resist Paralysis 100 · Disease immunity 100 · Resist Normal Weapons 50 · Weakness to Fire 50. (Owner-corrected 8/24: skill passives are +30 base; the old +50 Unarmored/Sneak/H2H reading came from a Berne vampire, whose clan trio adds +20 on top.) Skill bonuses show as 'Modified' under the Base armor skills — the base fields are not overwritten."><input type="checkbox" id="vamp"> Vampire</label>
   <label id="vampclanwrap" style="display:none;gap:5px;align-items:center" title="Vampire clan: each adds +20 to one attribute and three skills — Aundae: Wil, Short Blade/Mysticism/Destruction · Berne: Agi, Sneak/Unarmored/Hand-to-Hand · Quarra: Str, Blunt/Hand-to-Hand/Heavy Armor. Armor-skill bonuses appear on the Modified lines, not written into the base fields."><select id="vampclan"><option value="Aundae">Aundae Clan</option><option value="Berne">Berne Clan</option><option value="Quarra">Quarra Clan</option></select></label>
   <label style="display:flex;gap:5px;align-items:center"><input type="checkbox" id="wolf"> Werewolf</label>
@@ -1263,5 +1263,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.62 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.63 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
