@@ -866,7 +866,7 @@ function calc(){
     showStat = null; showRes = null;
   } else {
   el('tiles').classList.add('on');   // v1.65: rule above the tiles once they expand
-  el('tiles').innerHTML = tiles.map(t=>`<div class="tile${(showStat&&t[1]===showStat)||(showEq&&t[1]===showEq)?' sel':''}" data-k="${t[1]||''}"><div class="k${TITLECLS[t[1]]||''}">${t[0]}</div><div class="v">${t[2]}</div><div class="d">${t[3]}</div></div>`).join('');
+  el('tiles').innerHTML = tiles.map(t=>`<div class="tile${(showStat&&t[1]===showStat)||(showEq&&t[1]===showEq)?' sel':''}" data-k="${t[1]||''}"><div class="k${TITLECLS[t[1]]||''}">${t[0]}</div><div class="v">${t[2]}</div><div class="d">${(t[1]==='hit'||t[1]==='ar')?'':t[3]}</div></div>`).join('');   // v1.71: no subtext on Hit Damage / Armor (details stay in the breakout)
   }
   document.querySelectorAll('#col-equip .tile[data-k]').forEach(t=>t.classList.toggle('sel', showEq===t.dataset.k));
   const ss = el('strike'); if(ss) ss.addEventListener('change', calc);
@@ -1332,5 +1332,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.70 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.71 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
