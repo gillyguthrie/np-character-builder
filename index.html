@@ -66,7 +66,7 @@ button:hover{border-color:var(--gold)}
 .mpline{font-size:12px;color:var(--ink2);margin-top:10px}
 </style></head><body>
 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><h1 style="margin:0">Nerevarine Prophecies Character Builder</h1><button id="clearall" type="button" title="Reset the whole builder to defaults — race, birthsign, spec, all masteries, equipment, weapon, armor skills, vampire/werewolf" style="flex:none">Clear everything</button></div>
-<div style="font-size:12px;color:var(--ink2);margin:-6px 0 10px">Click any tile or resistance row to see its breakout — click again to close. Equip gear, toggle masteries, and every number updates live.</div>
+<div style="font-size:12px;color:var(--ink2);margin:-6px 0 10px">Click any tile or resistance row to see its breakout — click again to close. Equip gear, toggle masteries, and every number updates live. This tool assumes Lvl 60 with 100 attributes.</div>
 <div class="saverow">
   <span style="color:var(--ink2);font-size:12px">Loadout:</span>
   <input type="text" id="savename" placeholder="loadout name" style="width:160px">
@@ -522,15 +522,19 @@ function calc(){
   const magComputed = Math.floor(magInt * magMult + 1e-9);   // in-game display floors (462.5→462)
   const iMult = sum('magx');   // ×INT from items (e.g. Mantle of Woe 5.0) — stacks flatly like the abilities
   const magParts = `${SPECMAG[CLS]||0} ${CLS} spec + 1.5 level(60)` + (sMult?` + ${sMult} ${el('sign').value}`:'') + (rMult?` + ${rMult} ${el('race').value}`:'') + (iMult?` + ${iMult} items`:'');
-  // Fatigue RESOLVED 8/21: STR+WIL+AGI+END (UESP structure) + 55 NP bonus at L60 — validated exact on two L60 characters (515, 470). L1 shows +1; builder assumes L60.
+  // Fatigue CORRECTED 8/28 (KB v0.4.41, formula:fatigue): STR+WIL+AGI+END + floor(level x (0.02 + spec fatigue factor)).
+  // Spec factors Combat 1.8 / Magic 0.9 / Stealth 3.0 -> L60 level terms 109 / 55 / 181. The old universal "+55" had only been
+  // measured on Magic characters; the L60 Stealth clean reading (581 = 400 + 181) fits exactly. Builder assumes L60.
+  const SPECFAT = {Combat:1.8, Magic:0.9, Stealth:3.0};
   const fatSum = attr('str') + attr('wil') + attr('agi') + attr('end');
-  const fatBase = fatSum + 55;
+  const fatLvl = Math.floor(60 * (0.02 + (SPECFAT[CLS]||0)) + 1e-9);
+  const fatBase = fatSum + fatLvl;
   const totFat = fatBase + sum('fat');
   const totMag = magComputed + sum('mag');
   const totHP = bHP + sum('hp');
   POOLS = {hp0:[bHP, sum('hp'), 0, 'computed', `Base: END ${attr('end')} × ${hpFactor.toFixed(2)} (${CLS} ${HPRATIO}${hfSum?` + Health Factor ${hfSum}`:''})`],
            mag0:[magComputed, sum('mag'), 0, 'computed', magMult, `Base: min(INT ${sum('int')}, cap ${cap('int')}) = ${magInt} × ${magMult}`, magParts],
-           fat0:[fatBase, sum('fat'), fatSum, 'computed', `STR ${attr('str')} + WIL ${attr('wil')} + AGI ${attr('agi')} + END ${attr('end')} = ${fatSum}`]};
+           fat0:[fatBase, sum('fat'), fatSum, 'computed', `STR ${attr('str')} + WIL ${attr('wil')} + AGI ${attr('agi')} + END ${attr('end')} = ${fatSum}`, fatLvl, `Level term: 60 × (0.02 + ${SPECFAT[CLS]||0} ${CLS} fatigue factor) = ${fatLvl} (builder assumes L60)`]};
   // regens: tick = 6s CONFIRMED (2026-08-21); per-sec equivalent = /s + tick/6
   // v1.36 (maintainer-ruled 2026-08-26): NO native HP or fatigue regen exists — the archive quotes that
   // suggested a 5%-of-max native rate describe pool-scaled regen SOURCES, not a universal baseline, and the
@@ -815,7 +819,7 @@ function renderOne(bd, key){
     if(key==='fat0'){
       // v1.35: fatigue breakout sectioned like Health/Magicka — attribute arithmetic + the NP level bonus as separate lines
       list.push({t:'pbase', src:`Base: ${POOLS.fat0[4]}`, v:extra});
-      list.push({t:'pbase', src:'NP level bonus (+55 at L60 — +1 at L1; builder assumes L60)', v:55});
+      list.push({t:'pbase', src:POOLS.fat0[6], v:POOLS.fat0[5]});
     } else {
       list.push({t:'pbase', src: key==='hp0' ? POOLS.hp0[4] : POOLS.mag0[5], v:b});
     }
@@ -1144,5 +1148,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.42 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.43 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
