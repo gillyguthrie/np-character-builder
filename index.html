@@ -29,6 +29,10 @@ select{width:100%}
 details.msec{border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--panel2)}
 details.msec summary{cursor:pointer;padding:6px 10px;font-size:12px;color:var(--ink2)}
 .fam{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;align-items:baseline;padding:2px 0;font-size:12px;border-bottom:1px dotted #332c1d}
+[data-wt][placeholder='?']::placeholder{color:var(--bad);opacity:1;font-weight:700}
+.customrow .crow{display:grid;grid-template-columns:78px 150px 78px 52px auto;gap:4px 6px;align-items:center;margin-top:3px}
+.customrow .crow select{width:100%;font-size:11px}
+.customrow .crow input[type=text]{width:100%;font-size:11px;box-sizing:border-box}
 .fam .tag{text-align:right;white-space:nowrap;color:var(--gold);font-size:10.5px;opacity:.85}
 .fam:last-child{border-bottom:none}
 .fam .rk{white-space:nowrap;color:var(--muted);font-size:11px}
@@ -102,13 +106,13 @@ button:hover{border-color:var(--gold)}
 </div></details>
 <details class="col" id="col-char" open><summary><span>Character</span><button id="clearchar" type="button" class="paneclear" title="Reset level, race, birthsign, spec, vampire and werewolf">Clear all</button></summary><div class="colbody">
 <div style="font-size:12px;color:var(--ink);margin:2px 0 6px">Level 60, all attributes and skills at 100.</div><input type="hidden" id="lvl" value="60">
-<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Race</label><select id="race"></select></div>
+<div class="slot" style="grid-template-columns:92px 1fr;border-top:1px solid rgba(201,164,92,.3);padding-top:8px;margin-top:6px;"><label style="font-weight:700;color:var(--ink)">Race</label><select id="race"></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 6px" id="racenote"></div>
-<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Birthsign</label><select id="sign"></select></div>
+<div class="slot" style="grid-template-columns:92px 1fr;border-top:1px solid rgba(201,164,92,.3);padding-top:8px;margin-top:6px;"><label style="font-weight:700;color:var(--ink)">Birthsign</label><select id="sign"></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="signnote"></div>
-<div class="slot" style="grid-template-columns:92px 1fr"><label style="font-weight:700;color:var(--ink)">Spec</label><select id="cls" title="Specialization (the server's term): combat, magic, or stealth. Drives the mastery trees, equipment gating, the spec attribute, and the ability list."><option value="">— select —</option><option>Stealth</option><option>Combat</option><option>Magic</option></select></div>
+<div class="slot" style="grid-template-columns:92px 1fr;border-top:1px solid rgba(201,164,92,.3);padding-top:8px;margin-top:6px;"><label style="font-weight:700;color:var(--ink)">Spec</label><select id="cls" title="Specialization (the server's term): combat, magic, or stealth. Drives the mastery trees, equipment gating, the spec attribute, and the ability list."><option value="">— select —</option><option>Stealth</option><option>Combat</option><option>Magic</option></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="clsnote"></div>
-<div id="lvlrow" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;row-gap:4px;margin:4px 0 8px;font-size:12px;color:var(--ink2)">
+<div id="lvlrow" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;row-gap:4px;margin:6px 0 8px;padding-top:8px;border-top:1px solid rgba(201,164,92,.3);font-size:12px;color:var(--ink2)">
   <label style="display:flex;gap:5px;align-items:center" title="Passives: +20 Agi/Str/Wil/Spe · +30 Unarmored/Sneak/Hand-to-Hand/Athletics/Destruction/Illusion/Mysticism/Acrobatics · Resist Paralysis 100 · Disease immunity 100 · Resist Normal Weapons 50 · Weakness to Fire 50. (Owner-corrected 8/24: skill passives are +30 base; the old +50 Unarmored/Sneak/H2H reading came from a Berne vampire, whose clan trio adds +20 on top.) Skill bonuses show as 'Modified' under the Base armor skills — the base fields are not overwritten."><input type="checkbox" id="vamp"> Vampire</label>
   <label id="vampclanwrap" style="display:none;gap:5px;align-items:center" title="Vampire clan: each adds +20 to one attribute and three skills — Aundae: Wil, Short Blade/Mysticism/Destruction · Berne: Agi, Sneak/Unarmored/Hand-to-Hand · Quarra: Str, Blunt/Hand-to-Hand/Heavy Armor. Armor-skill bonuses appear on the Modified lines, not written into the base fields."><select id="vampclan"><option value="Aundae">Aundae Clan</option><option value="Berne">Berne Clan</option><option value="Quarra">Quarra Clan</option></select></label>
   <label style="display:flex;gap:5px;align-items:center"><input type="checkbox" id="wolf"> Werewolf</label>
@@ -199,16 +203,14 @@ SLOTS.forEach(([slot, label]) => {
   const bslot = SLOTBASE0(slot);
   if(SLOTGROUPS[slot]) slotsDiv.insertAdjacentHTML('beforeend', `<div class="slotgrp" style="margin:6px 0 2px;padding-top:6px;border-top:1px solid var(--line);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);font-weight:700">${SLOTGROUPS[slot]}</div>`);
   slotsDiv.insertAdjacentHTML('beforeend', `<div class="slot" style="grid-template-columns:92px 70px 1fr 48px"><label>${(SLOTEMOJI[slot]||'')+' '+label}</label><input type="text" data-search="${slot}" placeholder="search"><select data-slot="${slot}">${buildOptions(slot,'')}</select><input type="text" data-wt="${slot}" placeholder="wt" title="Item weight — prefilled from data when known; type to correct. Resets when you change the item." style="width:44px"></div>` +
-    `<div class="customrow" data-cslot="${slot}" style="display:none;margin:-2px 0 6px;padding-left:98px;font-size:11px;color:var(--ink2)">
-       <div><label style="cursor:pointer"><input type="checkbox" data-cen="${slot}" style="vertical-align:-2px"> enchant</label>
-       <select data-cfx="${slot}" style="width:auto">${CFX.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select>
-       + <input type="text" data-cmag="${slot}" value="${CBASE[bslot]||''}" style="width:44px" title="magnitude — applied only when the enchant box is checked${CBASE[bslot]?` · observed self-enchant max for this slot: ${CBASE[bslot]} (fortify-class)`:''}">
-       <span style="color:var(--muted)">${CBASE[bslot]?`max obs. ${CBASE[bslot]}`:''}</span></div>
-       <div data-cen2row="${slot}" style="display:none;margin-top:2px"><label style="cursor:pointer"><input type="checkbox" data-cen2="${slot}" style="vertical-align:-2px"> enchant 2</label>
-       <select data-cfx2="${slot}" style="width:auto">${CFX.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select>
-       + <input type="text" data-cmag2="${slot}" value="" style="width:44px" title="second enchantment magnitude — applied only when its box is checked"></div>` +
-      (ARSLOT[slot] ? `<div style="margin-top:2px">Armor Type <select data-cac="${slot}" style="width:auto" title="Unarmored = clothing: the Armor Rating field is ignored"><option value="unarmored">Unarmored</option><option value="light">Light</option><option value="medium">Medium</option><option value="heavy">Heavy</option></select>
-       &nbsp;Armor Rating <input type="text" data-car="${slot}" style="width:64px" disabled title="The piece's tooltip AR exactly as shown in YOUR inventory — it already reflects your skill AND any Melding Construct bonus, so it is used as-is (no rescale and no Melding multiplier applied). Editable once the armor type is Light/Medium/Heavy."></div>` : '') +
+    `<div class="customrow" data-cslot="${slot}" style="display:none;margin:-2px 0 6px;padding-left:98px;font-size:11px;color:var(--ink2)">` +
+       // v1.66: up to 8 enchant rows; row k appears once row k-1 is checked (row 1 always visible)
+       Array.from({length:8},(_,j)=>j+1).map(k=>`<div class="crow" data-enrow="${slot}" data-ek="${k}" style="${k>1?'display:none;':''}"><label style="cursor:pointer"><input type="checkbox" data-cen="${slot}" data-ek="${k}" style="vertical-align:-2px"> enchant</label>
+       <select data-cfx="${slot}" data-ek="${k}">${CFX.map(([kk,n])=>`<option value="${kk}">${n}</option>`).join('')}</select>
+       <span style="text-align:right">+</span><input type="text" data-cmag="${slot}" data-ek="${k}" value="${k===1?(CBASE[bslot]||''):''}" title="magnitude — applied only when this enchant box is checked${k===1&&CBASE[bslot]?` · observed self-enchant max for this slot: ${CBASE[bslot]} (fortify-class)`:''}">
+       ${k===1?`<span style="color:var(--muted);white-space:nowrap;font-size:10px" title="observed self-enchant max for this slot">${CBASE[bslot]?`max ${CBASE[bslot]}`:''}</span>`:'<span></span>'}</div>`).join('') +
+      (ARSLOT[slot] ? `<div class="crow"><span>Armor Type</span><select data-cac="${slot}" title="Unarmored = clothing: the Armor Rating field is ignored"><option value="unarmored">Unarmored</option><option value="light">Light</option><option value="medium">Medium</option><option value="heavy">Heavy</option></select>
+       <span style="text-align:right;white-space:nowrap">Armor Rating</span><input type="text" data-car="${slot}" value="0" style="opacity:.4" disabled title="The piece's tooltip AR exactly as shown in YOUR inventory — it already reflects your skill AND any Melding Construct bonus, so it is used as-is (no rescale and no Melding multiplier applied). Editable once the armor type is Light/Medium/Heavy."><span></span></div>` : '') +
       `</div>`);
 });
 function SLOTBASE0(slot){ return SLOTBASE[slot]||slot; }
@@ -506,15 +508,13 @@ function calc(){
   document.querySelectorAll('#slots select[data-slot]').forEach(sel=>{
     const slot = sel.dataset.slot;
     if(sel.value === '__custom__'){
-      const en = document.querySelector(`[data-cen="${slot}"]`).checked;
-      const fx = document.querySelector(`[data-cfx="${slot}"]`).value;
-      const mag = +document.querySelector(`[data-cmag="${slot}"]`).value || 0;
-      if(en && mag) push(`${cnameOf(slot)||'User item enchant'} [${SLOTLBL[slot]||slot}]`, {[fx]: mag});
-      // v1.64: optional second enchantment (row appears once the first enchant box is checked)
-      const en2 = (document.querySelector(`[data-cen2="${slot}"]`)||{}).checked;
-      const fx2 = (document.querySelector(`[data-cfx2="${slot}"]`)||{}).value;
-      const mag2 = +((document.querySelector(`[data-cmag2="${slot}"]`)||{}).value) || 0;
-      if(en && en2 && mag2 && fx2) push(`${cnameOf(slot)||'User item enchant'} (2) [${SLOTLBL[slot]||slot}]`, {[fx2]: mag2});
+      // v1.66: chained enchant rows — apply row k only while every row before it is checked
+      for(let k=1;k<=8;k++){
+        const cb = document.querySelector(`[data-cen="${slot}"][data-ek="${k}"]`); if(!cb || !cb.checked) break;
+        const fx = document.querySelector(`[data-cfx="${slot}"][data-ek="${k}"]`).value;
+        const mag = +document.querySelector(`[data-cmag="${slot}"][data-ek="${k}"]`).value || 0;
+        if(mag && fx) push(`${cnameOf(slot)||'User item enchant'}${k>1?` (${k})`:''} [${SLOTLBL[slot]||slot}]`, {[fx]: mag});
+      }
       return;
     }
     const it = findItem(sel.value); if(it){
@@ -1051,9 +1051,10 @@ function snapshot(){
   return { lvl: el('lvl').value, race: el('race').value, sign: el('sign').value, cls: el('cls').value, weapon: el('weapon').value, unarm: el('unarm').value, skl: el('sk_light').value, skm: el('sk_medium').value, skh: el('sk_heavy').value, vamp: el('vamp').checked, vampclan: el('vampclan')?el('vampclan').value:'Aundae', wolf: el('wolf').checked, strike: el('strike') ? el('strike').value : 'fs',
     slots: Object.fromEntries([...document.querySelectorAll('#slots select[data-slot]')].map(s=>[s.dataset.slot, s.value])),
     custom: Object.fromEntries([...document.querySelectorAll('#slots select[data-slot]')].filter(s=>s.value==='__custom__').map(s=>{const sl=s.dataset.slot;
-      return [sl, {fx: document.querySelector(`[data-cfx="${sl}"]`).value, mag: document.querySelector(`[data-cmag="${sl}"]`).value,
-        en: document.querySelector(`[data-cen="${sl}"]`).checked, nm: cnameOf(sl),
-        fx2: (document.querySelector(`[data-cfx2="${sl}"]`)||{}).value||'', mag2: (document.querySelector(`[data-cmag2="${sl}"]`)||{}).value||'', en2: !!(document.querySelector(`[data-cen2="${sl}"]`)||{}).checked,
+      const rows = Array.from({length:8},(_,j)=>j+1).map(k=>({fx: document.querySelector(`[data-cfx="${sl}"][data-ek="${k}"]`).value, mag: document.querySelector(`[data-cmag="${sl}"][data-ek="${k}"]`).value, en: document.querySelector(`[data-cen="${sl}"][data-ek="${k}"]`).checked}));
+      let last = 0; for(let k=0;k<8;k++){ if(!rows[k].en) break; last = k+1; }
+      return [sl, {fx: rows[0].fx, mag: rows[0].mag, en: rows[0].en, nm: cnameOf(sl),   // legacy first-row fields kept for older readers
+        ench: rows.slice(0, Math.max(last,1)),
         ar: (document.querySelector(`[data-car="${sl}"]`)||{}).value||'', ac: (document.querySelector(`[data-cac="${sl}"]`)||{}).value||''}];})),
     wts: Object.fromEntries([...document.querySelectorAll('[data-wt]')].filter(f=>f.value.trim()!=='').map(f=>[f.dataset.wt, f.value.trim()])),
     mast: [...document.querySelectorAll('#masteries input:checked')].map(cb=>DATA.masteries[+cb.dataset.mi].name) };
@@ -1088,13 +1089,17 @@ function restore(st){
     if(row) row.style.display = s.value==='__custom__' ? '' : 'none';
     const c = (st.custom||{})[s.dataset.slot];
     if(c){ const sl=s.dataset.slot;
-      document.querySelector(`[data-cfx="${sl}"]`).value = c.fx; document.querySelector(`[data-cmag="${sl}"]`).value = c.mag;
-      document.querySelector(`[data-cen="${sl}"]`).checked = c.en===undefined ? !!(+c.mag) : !!c.en;   // old saves: enchant was always-on
+      // v1.66: ench[] rows (fallback: legacy fx/mag/en + fx2/mag2/en2)
+      const rows = Array.isArray(c.ench) && c.ench.length ? c.ench
+                 : [{fx:c.fx, mag:c.mag, en: c.en===undefined ? !!(+c.mag) : !!c.en}].concat(c.fx2 ? [{fx:c.fx2, mag:c.mag2, en:!!c.en2}] : []);
+      for(let k=1;k<=8;k++){
+        const r = rows[k-1]; const cb=document.querySelector(`[data-cen="${sl}"][data-ek="${k}"]`), fxs=document.querySelector(`[data-cfx="${sl}"][data-ek="${k}"]`), mg=document.querySelector(`[data-cmag="${sl}"][data-ek="${k}"]`);
+        cb.checked = !!(r && r.en); if(r && r.fx) fxs.value = r.fx; mg.value = r ? (r.mag||'') : '';
+      }
+      syncEnchRows(sl);
       const car = document.querySelector(`[data-car="${sl}"]`), cac = document.querySelector(`[data-cac="${sl}"]`);
-      if(car) car.value = c.ar||''; if(cac) cac.value = c.ac||'unarmored';
-      if(car && cac) car.disabled = (cac.value==='unarmored');
-      const cen2=document.querySelector(`[data-cen2="${sl}"]`), cfx2=document.querySelector(`[data-cfx2="${sl}"]`), cmag2=document.querySelector(`[data-cmag2="${sl}"]`), r2=document.querySelector(`[data-cen2row="${sl}"]`);
-      if(cen2){ cen2.checked = !!c.en2; if(c.fx2) cfx2.value = c.fx2; cmag2.value = c.mag2||''; r2.style.display = document.querySelector(`[data-cen="${sl}"]`).checked ? '' : 'none'; }
+      if(cac) cac.value = c.ac||'unarmored'; if(car) car.value = c.ar||'';
+      if(car && cac) syncCar(sl);
       const si = document.querySelector(`#slots input[data-search="${sl}"]`);
       if(si){ si.value = c.nm||''; si.placeholder='name'; } }
   });
@@ -1133,6 +1138,20 @@ el('loadfile').addEventListener('change', ()=>{
   });
 });
 // v1.59: preset loader removed with the Presets row
+// v1.66: enchant-row chaining + Armor Rating gating for user-specified equipment
+function syncEnchRows(slot){
+  let show = true;
+  for(let k=1;k<=8;k++){
+    const row = document.querySelector(`[data-enrow="${slot}"][data-ek="${k}"]`); const cb = document.querySelector(`[data-cen="${slot}"][data-ek="${k}"]`);
+    row.style.display = show ? '' : 'none';
+    show = show && cb.checked;
+  }
+}
+function syncCar(slot){
+  const car = document.querySelector(`[data-car="${slot}"]`), cac = document.querySelector(`[data-cac="${slot}"]`); if(!car||!cac) return;
+  if(cac.value==='unarmored'){ car.value='0'; car.disabled=true; car.style.opacity='.4'; }
+  else { car.disabled=false; car.style.opacity=''; if(car.value==='0') car.value=''; }
+}
 document.addEventListener('change', e=>{
   if(e.target.matches('[data-wt]')) { calc(); return; }
   if(e.target.matches('#slots select[data-slot]')){
@@ -1145,9 +1164,9 @@ document.addEventListener('change', e=>{
     showShot(findItem(e.target.value));
   }
   if(e.target.id==='weapon') syncWt('__weapon');
-  if(e.target.matches('[data-cen]')){ const r2 = document.querySelector(`[data-cen2row="${e.target.dataset.cen}"]`); if(r2) r2.style.display = e.target.checked ? '' : 'none'; }
-  if(e.target.matches('[data-cac]')){ const car = document.querySelector(`[data-car="${e.target.dataset.cac}"]`); if(car){ car.disabled = (e.target.value==='unarmored'); } }
-  if(e.target.matches('[data-cfx],[data-cmag],[data-cen],[data-car],[data-cac],[data-cfx2],[data-cmag2],[data-cen2]')) { calc(); return; }
+  if(e.target.matches('[data-cen]')) syncEnchRows(e.target.dataset.cen);
+  if(e.target.matches('[data-cac]')) syncCar(e.target.dataset.cac);
+  if(e.target.matches('[data-cfx],[data-cmag],[data-cen],[data-car],[data-cac]')) { calc(); return; }
   if(e.target.id==='weapon') showShot(e.target.value===''?null:DATA.weapons[+e.target.value]);
   if(!e.target.matches('input[data-search]')) calc();
 });
@@ -1170,6 +1189,7 @@ el('unequipall').addEventListener('click', e=>{
   document.querySelectorAll('#slots input[data-search]').forEach(i=>{i.value=''; i.placeholder='search';});
   document.querySelectorAll('#slots select[data-slot]').forEach(s=>{ s.innerHTML = buildOptions(s.dataset.slot,''); s.value=''; });
   document.querySelectorAll('.customrow').forEach(r=>r.style.display='none');
+  document.querySelectorAll('[data-cen]').forEach(cb=>cb.checked=false); document.querySelectorAll('[data-cac]').forEach(sl=>{ sl.value='unarmored'; syncCar(sl.dataset.cac); }); document.querySelectorAll('.customrow').forEach(r=>syncEnchRows(r.dataset.cslot));
   document.querySelectorAll('[data-wt]').forEach(f=>{f.value='';f.placeholder='wt';});
   el('wsearch').value=''; el('weapon').innerHTML = buildWeaponOptions(''); el('weapon').value='';   // v1.59: Clear all also drops the weapon
   showShot(null); calc();
@@ -1279,5 +1299,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.65 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.66 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
