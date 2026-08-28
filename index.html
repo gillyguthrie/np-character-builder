@@ -325,21 +325,25 @@ Object.keys(sections).sort((a,b)=>{ const ia=SECTION_ORDER.indexOf(a), ib=SECTIO
       const gate = '';   // v1.53 (owner request 8/28): gate text no longer shown in rows (still in each checkbox tooltip)
       const fxsum = '';
       // v1.53: right-justified tag = the skill (Skill Masteries) or the attributes/stats the family modifies (from fx keys)
+      const TAGNAMES = Object.assign({}, STATNAMES, {fire:'Resist Fire',frost:'Resist Frost',shock:'Resist Shock',rmag:'Resist Magicka',poison:'Resist Poison',disease:'Resist Disease',para:'Resist Paralysis',nw:'Resist Normal Weapons',blight:'Resist Blight',
+        hot:'HoT',mot:'MoT',fot:'FoT',hp:'Health',mag:'Magicka',fat:'Fatigue',hf:'Health Factor',castch:'Cast Chance',
+        acro:'Acrobatics',alter:'Alteration',armorer:'Armorer',athl:'Athletics',axe:'Axe',block:'Block',blunt:'Blunt Weapon',conj:'Conjuration',ench:'Enchant',ha:'Heavy Armor',hth:'Hand-to-Hand',illu:'Illusion',la:'Light Armor',lb:'Long Blade',ma:'Medium Armor',merc:'Mercantile',myst:'Mysticism',resto:'Restoration',secur:'Security',spear:'Spear',speech:'Speechcraft',unarm:'Unarmored',sb:'Short Blade',dest:'Destruction',alch:'Alchemy',marks:'Marksman',sneak:'Sneak'});
       const tagOf = () => {
         const m0 = list[0][0];
         if(m0.section==='Skill Masteries' && m0.skill) return m0.skill;
         const keys = []; list.forEach(([m])=>Object.keys(m.fx||{}).forEach(k=>{ const b=k.replace(/_cap$/,''); if(!keys.includes(b)) keys.push(b); }));
-        const names = keys.map(k=>STATNAMES[k]||k);
+        const names = keys.map(k=>TAGNAMES[k]||k);
         return names.length>4 ? names.slice(0,3).join(', ')+` +${names.length-3}` : names.join(', ');
       };
       const tag = tagOf();
       const ranks = list.map(([m,i])=>{
         const tip = `${m.name} — ${m.cost} MP — ${Object.entries(m.fx).map(([k,v])=>k.endsWith('_cap')?`cap ${STATNAMES[k.replace('_cap','')]||k} +${v}`:`${STATNAMES[k]||k} ${v>0?'+':''}${v}`).join(', ')||m.raw||'no sheet effect'}${m.gate?` — requires: ${m.gate}`:''}`;
         return `<label title="${tip}">${m.rank||'✓'}<input type="checkbox" data-mi="${i}" data-fam="${encodeURIComponent(fam)}" data-rank="${m.rank}" ${m.plan?'checked':''}></label>`;
-      }).join('') + '<span class="rkpad"></span>'.repeat(Math.max(0, 5 - list.length));   // v1.54: ranks left-justified, padded to 5 slots so rank 1 lines up in every row
+      }).join('');
+      const ranksPadded = '<span class="rkpad"></span>'.repeat(Math.max(0, 5 - list.length)) + ranks;   // v1.55: ranks right-justified (pad on the left) in a fixed 5-slot grid
       const mrace = list[0][0].race || '';
       const gsign = (sec==='Birthsigns' && gate && /The (\w+) birthsign/.exec(gate)) ? /The (\w+) birthsign/.exec(gate)[1] : '';
-      inner += `<div class="fam"${mrace?` data-race="${mrace}"`:''}${gsign?` data-bsign="${gsign}"`:''}><span class="nm">${fam}${fxsum?` <span style="color:var(--muted);font-size:10.5px">${fxsum}</span>`:''}${gate?` <span class="aff" style="font-size:10.5px">${gate}</span>`:''}${aff?` <span class="aff" style="font-size:10.5px">${aff} affinity</span>`:''}</span><span class="tag">${tag}</span><span class="rk">${ranks} <span style="color:#5a5142;display:inline-block;width:42px;text-align:right">${total}mp</span></span></div>`;
+      inner += `<div class="fam"${mrace?` data-race="${mrace}"`:''}${gsign?` data-bsign="${gsign}"`:''}><span class="nm">${fam}${fxsum?` <span style="color:var(--muted);font-size:10.5px">${fxsum}</span>`:''}${gate?` <span class="aff" style="font-size:10.5px">${gate}</span>`:''}${aff?` <span class="aff" style="font-size:10.5px">${aff} affinity</span>`:''}</span><span class="tag">${tag}</span><span class="rk">${ranksPadded} <span style="color:#5a5142;display:inline-block;width:42px;text-align:right">${total}mp</span></span></div>`;
     });
   });
   mh += `<details class="msec"${anyPlan?' open':''}><summary>${sec}</summary><div class="mgroup">${inner}</div></details>`;
@@ -865,6 +869,9 @@ function calc(){
     const w = gate500.reduce((a,b)=>b.short>a.short?b:a);
     warn = ` <span style="color:var(--bad,#d9734f)">(warning: ${w.short} more MP must be selected to meet the ${w.name}${w.isMC?' Master Class':''} prerequisite — 500 MP spent before purchase)</span>`;
   }
+  // v1.55 (owner request 8/28): warn when the selected masteries span more than one affinity
+  const affs = [...new Set(chosen.map(m=>m.aff).filter(Boolean))];
+  if(affs.length > 1) warn += ` <span style="color:var(--bad,#d9734f)">(warning: multiple affinities selected — ${affs.join(', ')})</span>`;
   el('mpline').innerHTML = `Mastery Points Spent: <b style="color:var(--good)">${mp}</b>${warn}`;
   const fams = {};
   chosen.forEach(m=>{ (fams[m.fam]=fams[m.fam]||[]).push(m); });
@@ -1240,5 +1247,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.54 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.55 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
