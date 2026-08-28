@@ -847,13 +847,14 @@ function calc(){
     const v = Math.round(sum(k)*10)/10;   // round for display (Thick Skin can add fractional Resist Magicka)
     let cls, note;
     if(CHANCE[k]){ const mv = multStack(k); cls = mv>0?'capped':''; note = mv>0?'active':'—'; return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${mv}%</td><td class="${cls}">${note}</td></tr>`; }
-    else { cls = v>=85?'capped':(v<0?'neg':(v<40?'warnc':'')); note = v>=85?'✓ capped (85)':(v<0?'⚠ WEAKNESS':(v<40?'low':'ok')); }
-    // Fire Camp debuff (codex camp:infernal-flame-atronach-camp): camp mobs cast -70 Weakness to Fire.
-    // Effective resist there = raw stack − 70; you need a RAW stack ≥ 155 to still sit at the 85 cap while debuffed.
-    let extra = '';
-    if(k==='fire'){ const fc = Math.round((v-70)*10)/10;
-      const fcls = fc>=85?'capped':(fc<0?'neg':(fc<40?'warnc':''));
-      extra = ` <span class="${fcls}" title="2026 Fire Camp (Infernal Flame Atronachs): camp mobs cast -70 Weakness to Fire. Effective = raw stack − 70; a raw stack of 155+ stays at the 85 cap while debuffed.">· Fire Camp (−70): ${fc}%${fc>=85?' ✓':(fc<0?' ⚠':'')}</span>`; }
+    else {
+      // v1.62 (owner spec 8/28): status bands. 0 None · 1-19 Minimal · 20-39 Moderate · 40-59 Effective · 60-84 Strong · 85+ Maximum;
+      // -1..-19 Susceptible · -20..-39 Weak · -40..-59 Very Weak · -60 and below Critically Weak. (Fire Camp -70 line removed.)
+      const band = v>=85?['Maximum','capped']:v>=60?['Strong','']:v>=40?['Effective','']:v>=20?['Moderate','warnc']:v>0?['Minimal','warnc']:v===0?['None','']
+                 : v>-20?['Susceptible','neg']:v>-40?['Weak','neg']:v>-60?['Very Weak','neg']:['Critically Weak','neg'];
+      note = band[0]; cls = band[1];
+    }
+    const extra = '';
     return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${v}%</td><td class="${cls}">${note}${extra}</td></tr>`;
   }).join('');
   renderBreakdown();
@@ -1262,5 +1263,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.61 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.62 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
