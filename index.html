@@ -71,6 +71,7 @@ th{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.
 #mtable td{font-size:11.5px;padding:2px 6px}
 #mtable a.mgoto{color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--muted)}
 #mtable a.mgoto:hover{color:var(--gold);border-bottom-color:var(--gold)}
+.fam.hs,.subhead.hs,details.msec.hs{display:none !important}
 .fam.flash{background:rgba(201,164,92,.28);outline:1px solid var(--gold);border-radius:4px;transition:background 1.2s ease,outline-color 1.2s ease}
 .fam.flash.fade{background:transparent;outline-color:transparent}
 .debuff{background:#2e2016;border:1px solid #5a3a24;border-radius:6px;padding:8px 10px;margin-top:10px}
@@ -115,6 +116,7 @@ button:hover{border-color:var(--gold)}
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 6px" id="racenote"></div>
 <div class="slot" style="grid-template-columns:92px 1fr;border-top:1px solid rgba(201,164,92,.3);padding-top:8px;margin-top:6px;"><label style="font-weight:700;color:var(--ink)">Birthsign</label><select id="sign"></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="signnote"></div>
+<div id="signmast" style="display:none;margin:-2px 0 8px 92px;font-size:12px;color:var(--ink2)"></div>
 <div class="slot" style="grid-template-columns:92px 1fr;border-top:1px solid rgba(201,164,92,.3);padding-top:8px;margin-top:6px;"><label style="font-weight:700;color:var(--ink)">Spec</label><select id="cls" title="Specialization (the server's term): combat, magic, or stealth. Drives the mastery trees, equipment gating, the spec attribute, and the ability list."><option value="">— select —</option><option>Stealth</option><option>Combat</option><option>Magic</option></select></div>
 <div style="font-size:11px;color:var(--ink2);margin:2px 0 8px" id="clsnote"></div>
 <div id="lvlrow" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;row-gap:4px;margin:6px 0 8px;padding-top:8px;border-top:1px solid rgba(201,164,92,.3);font-size:12px;color:var(--ink2)">
@@ -128,7 +130,7 @@ button:hover{border-color:var(--gold)}
 <div id="breakdown"></div>
 <!-- v1.40: fire-camp debuff checkbox removed (owner request 8/27: not tracking it in the builder yet). Loadout files with a debuff field still load; the flag is ignored. -->
 </div></details>
-<details class="col" id="col-mast" open><summary><span>Masteries</span><button id="clearmast" type="button" class="paneclear" title="Uncheck every mastery">Clear all</button></summary><div class="colbody">
+<details class="col" id="col-mast" open><summary><span>Masteries</span><input type="text" id="msearch" placeholder="search masteries" title="Filter the list by name or tag — selections are kept; only the view changes" style="flex:1;min-width:80px;max-width:260px;font-size:11px;padding:2px 6px;text-transform:none;letter-spacing:0"><button id="clearmast" type="button" class="paneclear" title="Uncheck every mastery">Clear all</button></summary><div class="colbody">
 <div class="mpline" id="mpline" style="margin:6px 0 4px"></div>
 <table id="mtable" style="margin-bottom:8px"></table>
 <div id="masteries"></div>
@@ -208,7 +210,7 @@ function enchRowsHtml(slot, bslot){
   return Array.from({length:8},(_,j)=>j+1).map(k=>`<div class="crow" data-enrow="${slot}" data-ek="${k}" style="${k>1?'display:none;':''}"><label style="cursor:pointer"><input type="checkbox" data-cen="${slot}" data-ek="${k}" style="vertical-align:-2px"> enchant</label>
        <select data-cfx="${slot}" data-ek="${k}">${CFX.map(([kk,n])=>`<option value="${kk}">${n}</option>`).join('')}</select>
        <span style="text-align:right">+</span><input type="text" data-cmag="${slot}" data-ek="${k}" value="${k===1&&bslot?(CBASE[bslot]||''):''}" title="magnitude — applied only when this enchant box is checked${k===1&&bslot&&CBASE[bslot]?` · observed self-enchant max for this slot: ${CBASE[bslot]} (fortify-class)`:''}">
-       ${k===1?`<span style="color:var(--muted);white-space:nowrap;font-size:10px" title="observed self-enchant max for this slot">${bslot&&CBASE[bslot]?`max ${CBASE[bslot]}`:''}</span>`:'<span></span>'}</div>`).join('');
+       <span></span></div>`).join('');   // v1.77: 'max N' subtext removed (still in the magnitude tooltip)
 }
 const SLOTGROUPS = {helm:'🛡️ Armor', shirt:'💍 Clothing &amp; jewelry'};   // divider headers before these slots
 SLOTS.forEach(([slot, label]) => {
@@ -430,7 +432,27 @@ function filterSign(){
     row.style.display = show ? '' : 'none';
     if(!show) row.querySelectorAll('input:checked').forEach(cb=>cb.checked=false);
   });
+  renderSignMirror();
 }
+// v1.77 (owner request 8/28): the chosen sign's mastery also appears as a checkbox under the Birthsign selector.
+// It MIRRORS the row in the Birthsigns section (same checkbox state, same cascade) — the list row stays too.
+function renderSignMirror(){
+  const box = el('signmast'); const sign = el('sign').value;
+  const cbs = sign ? [...document.querySelectorAll(`#masteries .fam[data-bsign="${sign}"] input[data-mi]`)] : [];
+  if(!cbs.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.innerHTML = cbs.map(cb=>{ const m = DATA.masteries[+cb.dataset.mi];
+    return `<label style="display:flex;gap:6px;align-items:center;cursor:pointer" title="${m.name} — ${m.cost} MP — ${(m.raw||'').replace(/"/g,'&quot;')}${m.gate?` — requires: ${m.gate}`:''}"><input type="checkbox" data-mirror="${cb.dataset.mi}" ${cb.checked?'checked':''}> ${m.name} <span style="color:#5a5142">${m.cost}mp</span></label>`; }).join('');
+  box.style.display='';
+}
+function syncSignMirror(){
+  document.querySelectorAll('#signmast input[data-mirror]').forEach(mi=>{ const cb = document.querySelector(`#masteries input[data-mi="${mi.dataset.mirror}"]`); if(cb) mi.checked = cb.checked; });
+}
+el('signmast').addEventListener('change', e=>{
+  const mi = e.target.closest('input[data-mirror]'); if(!mi) return;
+  const cb = document.querySelector(`#masteries input[data-mi="${mi.dataset.mirror}"]`); if(!cb) return;
+  if(cb.checked !== mi.checked) cb.click();   // click() runs the prerequisite cascade + calc like the real row
+  syncSignMirror();
+});
 el('sign').addEventListener('change', filterSign);
 function filterClass(){
   const cls = el('cls').value;
@@ -893,6 +915,7 @@ function calc(){
     return `<tr class="rrow${showRes===k?' sel':''}" data-k="${k}"><td>${n}</td><td class="num ${cls}">${v}%</td><td class="${cls}">${note}${extra}</td></tr>`;
   }).join('');
   renderBreakdown();
+  syncSignMirror();
   // v1.47 (owner request 8/28): '500 Points Spent' gate check. Per KB masteries _meta (maintainer-ruled 8/24) the 500 must be
   // spent on OTHER masteries before the gated purchase - its own cost never counts, and neither can anything that requires it
   // (those can't exist yet). So for a selected master class: (total - own cost - its dependents' cost) must reach 500.
@@ -1187,6 +1210,38 @@ el('loadfile').addEventListener('change', ()=>{
   });
 });
 // v1.59: preset loader removed with the Presets row
+// v1.77 (owner request 8/28): mastery search — filters the VIEW only (rows/sections get .hs); checkbox state is untouched.
+let _msOpenSnap = null;
+function applyMasterySearch(){
+  const q = el('msearch').value.trim().toLowerCase();
+  const secs = [...document.querySelectorAll('#masteries details.msec')];
+  if(!q){
+    document.querySelectorAll('#masteries .hs').forEach(x=>x.classList.remove('hs'));
+    if(_msOpenSnap){ secs.forEach((sec,i)=>{ sec.open = _msOpenSnap[i]; }); _msOpenSnap = null; }
+    return;
+  }
+  if(!_msOpenSnap) _msOpenSnap = secs.map(sec=>sec.open);
+  secs.forEach(sec=>{
+    let any = false;
+    const kids = [...sec.querySelector('.mgroup').children];
+    let head = null, headHit = false;
+    const flushHead = ()=>{ if(head) head.classList.toggle('hs', !headHit); };
+    kids.forEach(k=>{
+      if(k.classList.contains('subhead')){ flushHead(); head = k; headHit = false; return; }
+      if(!k.classList.contains('fam')){ return; }
+      const txt = k.textContent.toLowerCase();
+      const hit = txt.includes(q);
+      k.classList.toggle('hs', !hit);
+      if(hit){ any = true; headHit = true; }
+    });
+    flushHead();
+    sec.classList.toggle('hs', !any);
+    if(any) sec.open = true;
+  });
+}
+el('msearch').addEventListener('input', applyMasterySearch);
+el('msearch').addEventListener('click', e=>e.stopPropagation());
+el('msearch').addEventListener('keydown', e=>{ if(e.key===' ') e.stopPropagation(); });
 // v1.66: enchant-row chaining + Armor Rating gating for user-specified equipment
 function enchRowsState(slot){
   const rows = Array.from({length:8},(_,j)=>j+1).map(k=>({fx: document.querySelector(`[data-cfx="${slot}"][data-ek="${k}"]`).value, mag: document.querySelector(`[data-cmag="${slot}"][data-ek="${k}"]`).value, en: document.querySelector(`[data-cen="${slot}"][data-ek="${k}"]`).checked}));
@@ -1361,5 +1416,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.76 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.77 · 2026-08-28 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
