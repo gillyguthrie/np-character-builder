@@ -72,6 +72,8 @@ th{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.
 #mtable a.mgoto{color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--muted)}
 #mtable a.mgoto:hover{color:var(--gold);border-bottom-color:var(--gold)}
 .fam.hs,.subhead.hs,details.msec.hs{display:none !important}
+.fam.mcabil{padding-left:16px}.fam.mcabil .nm::before{content:"\21B3 ";color:var(--muted)}
+.fam.mcabil:not(.show):not(.qhit){display:none}   /* v1.81: master-class abilities show only while their parent is checked (or matches a search) */
 .fam.flash{background:rgba(201,164,92,.28);outline:1px solid var(--gold);border-radius:4px;transition:background 1.2s ease,outline-color 1.2s ease}
 .fam.flash.fade{background:transparent;outline-color:transparent}
 .debuff{background:#2e2016;border:1px solid #5a3a24;border-radius:6px;padding:8px 10px;margin-top:10px}
@@ -326,6 +328,12 @@ DATA.masteries.forEach((m,i)=>{
   const famKey = m.fam;   // v1.53: rows sort by family name; the skill/attribute moves to a right-justified tag
   (sections[sec][foc][famKey] = sections[sec][foc][famKey]||[]).push([m,i]);
 });
+// v1.81 (owner request 10/2): master-class sections list each master class followed by its abilities (no sub-groups);
+// an ability row stays hidden until its parent master class is checked. Parent = the gate token '<X> Master Class'.
+const MCSECS = ['Combat Master Classes','Magic Master Classes','Stealth Master Classes'];
+const _aposR = s => s.replace(/[\u2019\u2018]/g, "'").trim();
+const MIDXR = {}; DATA.masteries.forEach((m,i)=>{ MIDXR[_aposR(m.name)] = i; });
+const _mcParent = m => { let p = null; (m.gate||'').split(',').forEach(tok=>{ let t=_aposR(tok); if(t.endsWith(' Master Class')){ t=t.slice(0,-' Master Class'.length); if(t in MIDXR) p = MIDXR[t]; } }); return p; };
 let mh = '';
 if(topPicks.length){
   // v1.58: the top box is gone — Godborn / God Touched render at the bottom of Attributes / Blessings (see below)
@@ -334,10 +342,8 @@ Object.keys(sections).sort((a,b)=>{ const ia=SECTION_ORDER.indexOf(a), ib=SECTIO
   const foci = sections[sec];
   const anyPlan = Object.values(foci).some(fams=>Object.values(fams).some(list=>list.some(([m])=>m.plan)));
   let inner = '';
-  Object.keys(foci).sort().forEach(foc=>{
-    if(foc) inner += `<div class="subhead">${foc}</div>`;
-    Object.keys(foci[foc]).sort().forEach(fam=>{
-      const list = foci[foc][fam].sort((a,b)=>a[0].rank-b[0].rank);
+  const famRow = (fam, list0, extraCls, extraAttr) => {
+      const list = list0.slice().sort((a,b)=>a[0].rank-b[0].rank);
       const total = list.reduce((s,[m])=>s+m.cost,0);
       const aff = list[0][0].aff;
       const gate = '';   // v1.53 (owner request 8/28): gate text no longer shown in rows (still in each checkbox tooltip)
@@ -362,9 +368,26 @@ Object.keys(sections).sort((a,b)=>{ const ia=SECTION_ORDER.indexOf(a), ib=SECTIO
       const mrace = list[0][0].race || '';
       const rawGate = list.map(([m])=>m.gate).find(Boolean) || '';   // v1.58: filter reads the real gate (display gate is blank since v1.53)
       const gsign = (sec==='Birthsigns' && /The (\w+) birthsign/.exec(rawGate)) ? /The (\w+) birthsign/.exec(rawGate)[1] : '';
-      inner += `<div class="fam"${mrace?` data-race="${mrace}"`:''}${gsign?` data-bsign="${gsign}"`:''}><span class="nm">${fam}${fxsum?` <span style="color:var(--muted);font-size:10.5px">${fxsum}</span>`:''}${gate?` <span class="aff" style="font-size:10.5px">${gate}</span>`:''}${aff?` <span class="aff" style="font-size:10.5px">${aff} affinity</span>`:''}</span><span class="tag">${tag}</span><span class="rk">${ranksPadded} <span style="color:#5a5142;display:inline-block;width:42px;text-align:right">${total}mp</span></span></div>`;
+      return `<div class="fam${extraCls||''}"${extraAttr||''}${mrace?` data-race="${mrace}"`:''}${gsign?` data-bsign="${gsign}"`:''}><span class="nm">${fam}${fxsum?` <span style="color:var(--muted);font-size:10.5px">${fxsum}</span>`:''}${gate?` <span class="aff" style="font-size:10.5px">${gate}</span>`:''}${aff?` <span class="aff" style="font-size:10.5px">${aff} affinity</span>`:''}</span><span class="tag">${tag}</span><span class="rk">${ranksPadded} <span style="color:#5a5142;display:inline-block;width:42px;text-align:right">${total}mp</span></span></div>`;
+  };
+  if(MCSECS.includes(sec)){
+    const fams = {}; Object.values(foci).forEach(fs=>Object.entries(fs).forEach(([fam,list])=>{ fams[fam] = (fams[fam]||[]).concat(list); }));
+    const parentOf = {}; Object.keys(fams).forEach(fam=>{ parentOf[fam] = _mcParent(fams[fam][0][0]); });
+    const mcs = Object.keys(fams).filter(f=>parentOf[f]===null).sort();
+    const mcIdx = new Set(mcs.map(mc=>fams[mc][0][1]));
+    mcs.forEach(mc=>{
+      inner += famRow(mc, fams[mc]);
+      const mi = fams[mc][0][1];
+      Object.keys(fams).filter(f=>parentOf[f]===mi).sort().forEach(ab=>{ inner += famRow(ab, fams[ab], ' mcabil', ` data-parent="${mi}"`); });
     });
-  });
+    // abilities whose parent master class lives in another section (should not happen) still render, gated on that parent
+    Object.keys(fams).filter(f=>parentOf[f]!==null && !mcIdx.has(parentOf[f])).sort().forEach(ab=>{ inner += famRow(ab, fams[ab], ' mcabil', ` data-parent="${parentOf[ab]}"`); });
+  } else {
+    Object.keys(foci).sort().forEach(foc=>{
+      if(foc) inner += `<div class="subhead">${foc}</div>`;
+      Object.keys(foci[foc]).sort().forEach(fam=>{ inner += famRow(fam, foci[foc][fam]); });
+    });
+  }
   // v1.58: Godborn closes the Attributes section, God Touched closes Blessings — each under a rule
   const bottomName = {'Attributes':'Godborn','Blessings (Resists)':'God Touched'}[sec];
   const bottom = bottomName && topPicks.find(([m])=>m.name===bottomName);
@@ -415,6 +438,11 @@ document.querySelectorAll('#masteries input[data-rank]').forEach(cb=>{
     if(cb.checked) cascadeOn(i, new Set()); else cascadeOff(i, new Set());
   });
 });
+// v1.81: master-class abilities are visible only while their parent master class is checked
+function syncMCAbilities(){
+  document.querySelectorAll('#masteries .fam.mcabil').forEach(row=>{ const p = cbOf(+row.dataset.parent); row.classList.toggle('show', !!(p && p.checked)); });
+}
+syncMCAbilities();
 el('clearmast').addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#masteries input').forEach(cb=>cb.checked=false); calc(); });   // v1.50: lives in the pane header (top-right, never moves); stopPropagation keeps the <details> from toggling
 function filterRacial(){
   const race = el('race').value;
@@ -524,6 +552,7 @@ function showShot(obj){
 let CONTRIB = []; let showStat = null; let showRes = null; let showEq = null; let TICKS = []; let ARLIST = [];
 let POOLS = {}, REGEN = {}, DPSINFO = {}, UNKNOWNS = {}, ARUNK = [], ENCLIST = [], ENCTOT = 0;
 function calc(){
+  syncMCAbilities();   // v1.81
   CONTRIB = []; TICKS = []; ARLIST = [];
   const push = (src,obj,t)=>{ for(const [k,v] of Object.entries(obj)) if(v) CONTRIB.push({src,k,v,t:t||'item'}); };
   push('Base', {agi:100,str:100,end:100,spe:100,int:100,wil:100,per:100,luc:100,dest:100,athl:100}, 'base');
@@ -1216,7 +1245,7 @@ function applyMasterySearch(){
   const q = el('msearch').value.trim().toLowerCase();
   const secs = [...document.querySelectorAll('#masteries details.msec')];
   if(!q){
-    document.querySelectorAll('#masteries .hs').forEach(x=>x.classList.remove('hs'));
+    document.querySelectorAll('#masteries .hs, #masteries .qhit').forEach(x=>x.classList.remove('hs','qhit'));
     if(_msOpenSnap){ secs.forEach((sec,i)=>{ sec.open = _msOpenSnap[i]; }); _msOpenSnap = null; }
     return;
   }
@@ -1232,6 +1261,7 @@ function applyMasterySearch(){
       const txt = k.textContent.toLowerCase();
       const hit = txt.includes(q);
       k.classList.toggle('hs', !hit);
+      if(k.classList.contains('mcabil')) k.classList.toggle('qhit', hit);   // v1.81
       if(hit){ any = true; headHit = true; }
     });
     flushHead();
@@ -1416,5 +1446,5 @@ calc();
   }));
 })();
 
-document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.80 · 2026-10-02 · formulas from in-game measurement · report errors on the server Discord</div>');
+document.body.insertAdjacentHTML('beforeend', '<div style="margin:14px 0 6px;font-size:11px;color:var(--muted)">Nerevarine Prophecies Character Builder — community edition v1.81 · 2026-10-02 · formulas from in-game measurement · report errors on the server Discord</div>');
 </script></body></html>
